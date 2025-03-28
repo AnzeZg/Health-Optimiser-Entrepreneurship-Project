@@ -17,8 +17,12 @@ import {
   ListItemSecondaryAction,
   Card,
   CardContent,
+  Checkbox,
+  Divider,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { useStore } from '../store/useStore';
+import { format } from 'date-fns';
 
 interface Workout {
   id: string;
@@ -26,9 +30,18 @@ interface Workout {
   duration: number;
   caloriesBurned?: number;
   date: string;
+  completed?: boolean;
+  type: 'strength' | 'cardio' | 'flexibility';
+  exercises?: {
+    name: string;
+    sets: number;
+    reps: number;
+    weight?: number;
+  }[];
 }
 
 const WorkoutLogging: React.FC = () => {
+  const { routine, updateWorkoutStatus } = useStore();
   const [openDialog, setOpenDialog] = useState(false);
   const [newWorkout, setNewWorkout] = useState<Partial<Workout>>({
     name: '',
@@ -71,6 +84,9 @@ const WorkoutLogging: React.FC = () => {
   const totalDuration = workouts.reduce((sum, workout) => sum + workout.duration, 0);
   const totalCaloriesBurned = workouts.reduce((sum, workout) => sum + (workout.caloriesBurned || 0), 0);
 
+  const today = new Date().toISOString().split('T')[0];
+  const routineWorkouts = routine?.workouts.filter((workout) => workout.date === today) || [];
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
@@ -104,11 +120,54 @@ const WorkoutLogging: React.FC = () => {
           </Card>
         </Grid>
 
-        {/* Workout List */}
+        {/* Routine Workouts */}
+        {routineWorkouts.length > 0 && (
+          <Grid item xs={12}>
+            <Paper sx={{ p: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Today's Routine Workouts
+              </Typography>
+              <List>
+                {routineWorkouts.map((workout) => (
+                  <React.Fragment key={workout.id}>
+                    <ListItem>
+                      <Checkbox
+                        checked={workout.completed}
+                        onChange={(e) => updateWorkoutStatus(workout.id, e.target.checked)}
+                        sx={{ mr: 2 }}
+                      />
+                      <ListItemText
+                        primary={workout.name}
+                        secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories`}
+                      />
+                    </ListItem>
+                    {workout.exercises && (
+                      <List>
+                        {workout.exercises.map((exercise, index) => (
+                          <ListItem key={index} sx={{ pl: 4 }}>
+                            <ListItemText
+                              primary={exercise.name}
+                              secondary={`${exercise.sets} sets × ${exercise.reps} reps${
+                                exercise.weight ? ` • ${exercise.weight}kg` : ''
+                              }`}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    )}
+                    <Divider />
+                  </React.Fragment>
+                ))}
+              </List>
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Custom Workouts */}
         <Grid item xs={12}>
           <Paper sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Workout History</Typography>
+              <Typography variant="h6">Custom Workouts</Typography>
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
@@ -123,7 +182,7 @@ const WorkoutLogging: React.FC = () => {
                 <ListItem key={workout.id}>
                   <ListItemText
                     primary={workout.name}
-                    secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories burned • ${workout.date}`}
+                    secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories • ${workout.date}`}
                   />
                   <ListItemSecondaryAction>
                     <IconButton

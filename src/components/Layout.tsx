@@ -21,6 +21,7 @@ import {
   Restaurant as RestaurantIcon,
   FitnessCenter as FitnessCenterIcon,
   Bedtime as BedtimeIcon,
+  CalendarMonth as CalendarIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -41,6 +42,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: 'Meals', icon: <RestaurantIcon />, path: '/meals' },
     { text: 'Workouts', icon: <FitnessCenterIcon />, path: '/workouts' },
     { text: 'Sleep', icon: <BedtimeIcon />, path: '/sleep' },
+    { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
   ];
 
   const handleDrawerToggle = () => {

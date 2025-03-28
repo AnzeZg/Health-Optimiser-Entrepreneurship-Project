@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface Meal {
+export interface Meal {
   id: string;
   name: string;
   calories: number;
@@ -10,17 +10,26 @@ interface Meal {
   fat?: number;
   category: string;
   date: string;
+  completed?: boolean;
 }
 
-interface Workout {
+export interface Workout {
   id: string;
   name: string;
   duration: number;
   caloriesBurned?: number;
   date: string;
+  completed?: boolean;
+  type: 'strength' | 'cardio' | 'flexibility';
+  exercises?: {
+    name: string;
+    sets: number;
+    reps: number;
+    weight?: number;
+  }[];
 }
 
-interface SleepEntry {
+export interface SleepEntry {
   id: string;
   date: string;
   bedtime: string;
@@ -29,16 +38,33 @@ interface SleepEntry {
   quality?: number;
 }
 
+export interface Routine {
+  id: string;
+  startDate: string;
+  endDate: string;
+  meals: Meal[];
+  workouts: Workout[];
+  sleepSchedule: {
+    bedtime: string;
+    wakeTime: string;
+    duration: number;
+  };
+}
+
 interface HealthStore {
   meals: Meal[];
   workouts: Workout[];
   sleepEntries: SleepEntry[];
+  routine: Routine | null;
   addMeal: (meal: Omit<Meal, 'id'>) => void;
   deleteMeal: (id: string) => void;
   addWorkout: (workout: Omit<Workout, 'id'>) => void;
   deleteWorkout: (id: string) => void;
   addSleepEntry: (entry: Omit<SleepEntry, 'id'>) => void;
   deleteSleepEntry: (id: string) => void;
+  setRoutine: (routine: Routine) => void;
+  updateMealStatus: (id: string, completed: boolean) => void;
+  updateWorkoutStatus: (id: string, completed: boolean) => void;
 }
 
 export const useStore = create<HealthStore>()(
@@ -47,6 +73,7 @@ export const useStore = create<HealthStore>()(
       meals: [],
       workouts: [],
       sleepEntries: [],
+      routine: null,
 
       addMeal: (meal) =>
         set((state) => ({
@@ -94,6 +121,25 @@ export const useStore = create<HealthStore>()(
       deleteSleepEntry: (id) =>
         set((state) => ({
           sleepEntries: state.sleepEntries.filter((entry) => entry.id !== id),
+        })),
+
+      setRoutine: (routine) =>
+        set(() => ({
+          routine,
+        })),
+
+      updateMealStatus: (id, completed) =>
+        set((state) => ({
+          meals: state.meals.map((meal) =>
+            meal.id === id ? { ...meal, completed } : meal
+          ),
+        })),
+
+      updateWorkoutStatus: (id, completed) =>
+        set((state) => ({
+          workouts: state.workouts.map((workout) =>
+            workout.id === id ? { ...workout, completed } : workout
+          ),
         })),
     }),
     {

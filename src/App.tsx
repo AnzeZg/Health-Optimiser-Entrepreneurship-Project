@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import MealTracking from './pages/MealTracking';
 import WorkoutLogging from './pages/WorkoutLogging';
 import SleepTracking from './pages/SleepTracking';
+import Calendar from './pages/Calendar';
 
 const theme = createTheme({
   palette: {
@@ -30,6 +31,7 @@ function App() {
             <Route path="/meals" element={<MealTracking />} />
             <Route path="/workouts" element={<WorkoutLogging />} />
             <Route path="/sleep" element={<SleepTracking />} />
+            <Route path="/calendar" element={<Calendar />} />
           </Routes>
         </Layout>
       </Router>
