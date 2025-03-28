@@ -1,28 +1,32 @@
 import React, { useState } from 'react';
 import {
-  Grid,
-  Paper,
-  Typography,
   Box,
+  Typography,
+  Paper,
+  Grid,
   Button,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  IconButton,
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
+  IconButton,
   Card,
   CardContent,
   Checkbox,
   Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  ListItemSecondaryAction,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useStore } from '../store/useStore';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 
 interface Workout {
   id: string;
@@ -41,15 +45,16 @@ interface Workout {
 }
 
 const WorkoutLogging: React.FC = () => {
-  const { routine, updateWorkoutStatus } = useStore();
+  const { routine, workouts, addWorkout, deleteWorkout, updateWorkoutStatus } = useStore();
   const [openDialog, setOpenDialog] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [newWorkout, setNewWorkout] = useState<Partial<Workout>>({
     name: '',
     duration: 0,
     caloriesBurned: 0,
     date: new Date().toISOString().split('T')[0],
+    exercises: [],
   });
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
 
   const handleOpenDialog = () => {
     setOpenDialog(true);
@@ -61,31 +66,40 @@ const WorkoutLogging: React.FC = () => {
       name: '',
       duration: 0,
       caloriesBurned: 0,
-      date: new Date().toISOString().split('T')[0],
+      date: selectedDate,
+      exercises: [],
     });
   };
 
   const handleAddWorkout = () => {
     if (!newWorkout.name || !newWorkout.duration) return;
 
-    const workoutWithId = {
-      ...newWorkout,
-      id: Date.now().toString(),
-    } as Workout;
-
-    setWorkouts([workoutWithId, ...workouts]);
+    addWorkout(newWorkout as Omit<Workout, 'id'>);
     handleCloseDialog();
   };
 
-  const handleDeleteWorkout = (workoutId: string) => {
-    setWorkouts(workouts.filter((workout) => workout.id !== workoutId));
+  const handleDeleteWorkout = (id: string) => {
+    deleteWorkout(id);
   };
 
-  const totalDuration = workouts.reduce((sum, workout) => sum + workout.duration, 0);
-  const totalCaloriesBurned = workouts.reduce((sum, workout) => sum + (workout.caloriesBurned || 0), 0);
+  const totalCaloriesBurned = workouts
+    .filter((workout) => workout.date === selectedDate)
+    .reduce((sum, workout) => sum + (workout.caloriesBurned || 0), 0);
 
-  const today = new Date().toISOString().split('T')[0];
-  const routineWorkouts = routine?.workouts.filter((workout) => workout.date === today) || [];
+  const totalDuration = workouts
+    .filter((workout) => workout.date === selectedDate)
+    .reduce((sum, workout) => sum + workout.duration, 0);
+
+  const routineWorkouts = routine?.workouts.filter((workout) => workout.date === selectedDate) || [];
+  const customWorkouts = workouts.filter((workout) => workout.date === selectedDate);
+
+  const dateOptions = Array.from({ length: 7 }, (_, i) => {
+    const date = subDays(new Date(), i);
+    return {
+      value: format(date, 'yyyy-MM-dd'),
+      label: format(date, 'MMM dd, yyyy'),
+    };
+  }).reverse();
 
   return (
     <Box>
@@ -94,15 +108,36 @@ const WorkoutLogging: React.FC = () => {
       </Typography>
 
       <Grid container spacing={3}>
+        {/* Date Selection */}
+        <Grid item xs={12}>
+          <FormControl fullWidth sx={{ mb: 3 }}>
+            <InputLabel>Select Date</InputLabel>
+            <Select
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              label="Select Date"
+            >
+              {dateOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Grid>
+
         {/* Summary Cards */}
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Total Exercise Time Today
+                Total Calories Burned
               </Typography>
               <Typography variant="h3" color="primary">
-                {totalDuration} min
+                {totalCaloriesBurned}
+              </Typography>
+              <Typography variant="subtitle1" color="text.secondary">
+                kcal
               </Typography>
             </CardContent>
           </Card>
@@ -111,10 +146,13 @@ const WorkoutLogging: React.FC = () => {
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
-                Total Calories Burned Today
+                Total Duration
               </Typography>
               <Typography variant="h3" color="primary">
-                {totalCaloriesBurned} kcal
+                {totalDuration}
+              </Typography>
+              <Typography variant="subtitle1" color="text.secondary">
+                minutes
               </Typography>
             </CardContent>
           </Card>
@@ -125,7 +163,7 @@ const WorkoutLogging: React.FC = () => {
           <Grid item xs={12}>
             <Paper sx={{ p: 2 }}>
               <Typography variant="h6" gutterBottom>
-                Today's Routine Workouts
+                Today's Workout Plan
               </Typography>
               <List>
                 {routineWorkouts.map((workout) => (
@@ -144,7 +182,7 @@ const WorkoutLogging: React.FC = () => {
                     {workout.exercises && (
                       <List>
                         {workout.exercises.map((exercise, index) => (
-                          <ListItem key={index} sx={{ pl: 4 }}>
+                          <ListItem key={index}>
                             <ListItemText
                               primary={exercise.name}
                               secondary={`${exercise.sets} sets × ${exercise.reps} reps${
@@ -178,11 +216,11 @@ const WorkoutLogging: React.FC = () => {
             </Box>
 
             <List>
-              {workouts.map((workout) => (
+              {customWorkouts.map((workout) => (
                 <ListItem key={workout.id}>
                   <ListItemText
                     primary={workout.name}
-                    secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories • ${workout.date}`}
+                    secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories`}
                   />
                   <ListItemSecondaryAction>
                     <IconButton
@@ -226,14 +264,6 @@ const WorkoutLogging: React.FC = () => {
               value={newWorkout.caloriesBurned}
               onChange={(e) => setNewWorkout({ ...newWorkout, caloriesBurned: Number(e.target.value) })}
               sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Date"
-              type="date"
-              value={newWorkout.date}
-              onChange={(e) => setNewWorkout({ ...newWorkout, date: e.target.value })}
-              InputLabelProps={{ shrink: true }}
             />
           </Box>
         </DialogContent>

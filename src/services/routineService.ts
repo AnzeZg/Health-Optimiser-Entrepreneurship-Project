@@ -1,111 +1,114 @@
-import { Routine, Workout } from '../store/useStore';
+import { Routine, Workout, QuestionnaireData } from '../store/useStore';
 
-interface QuestionnaireData {
-  fitnessGoals: string[];
-  workoutPreferences: string[];
-  dietaryRestrictions: string[];
-  sleepSchedule: {
-    preferredBedtime: string;
-    preferredWakeTime: string;
-    totalSleepHours: number;
-  };
-  nutritionGoals: {
-    dailyCalories: number;
-    proteinPercentage: number;
-    carbsPercentage: number;
-    fatPercentage: number;
-  };
-}
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+
+const generatePrompt = (data: QuestionnaireData): string => {
+  const { generalInfo, wellnessPreferences } = data;
+  
+  return `Create a personalized 30-day health and wellness routine for a ${generalInfo.age} year old ${generalInfo.biologicalSex} with the following characteristics:
+- Height: ${generalInfo.height}cm
+- Weight: ${generalInfo.weight}kg
+- Activity Level: ${generalInfo.activityLevel}
+- Medical Limitations: ${generalInfo.medicalLimitations.join(', ')}
+- Diet Type: ${generalInfo.dietType}
+
+Wellness Goals:
+- Main Goal: ${wellnessPreferences.mainGoal}
+- Focus Areas: ${wellnessPreferences.focusAreas.join(', ')}
+- Daily Time Available: ${wellnessPreferences.timeDedication}
+- Preferred Time: ${wellnessPreferences.preferredTime}
+- Participate in Challenges: ${wellnessPreferences.participateInChallenges}
+- Want Daily Reminders: ${wellnessPreferences.wantReminders}
+
+Please generate a detailed 30-day routine that includes:
+1. Daily workouts with specific exercises, sets, reps, and weights
+2. Meal plans with calorie counts and macronutrient breakdowns
+3. Sleep schedule recommendations
+4. Additional wellness activities based on the focus areas
+
+Format the response as a JSON object with the following structure:
+{
+  "id": "string",
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD",
+  "meals": [
+    {
+      "id": "string",
+      "name": "string",
+      "calories": number,
+      "protein": number,
+      "carbs": number,
+      "fat": number,
+      "category": "Breakfast" | "Lunch" | "Dinner" | "Snacks",
+      "date": "YYYY-MM-DD",
+      "completed": boolean
+    }
+  ],
+  "workouts": [
+    {
+      "id": "string",
+      "name": "string",
+      "duration": number,
+      "caloriesBurned": number,
+      "date": "YYYY-MM-DD",
+      "completed": boolean,
+      "type": "strength" | "cardio" | "flexibility",
+      "exercises": [
+        {
+          "name": "string",
+          "sets": number,
+          "reps": number,
+          "weight": number
+        }
+      ]
+    }
+  ],
+  "sleepSchedule": {
+    "bedtime": "HH:mm",
+    "wakeTime": "HH:mm",
+    "duration": number
+  }
+}`;
+};
 
 export const generateRoutine = async (data: QuestionnaireData): Promise<Routine> => {
-  // TODO: Replace with actual OpenAI API call
-  // This is a mock implementation
-  const mockRoutine: Routine = {
-    id: Date.now().toString(),
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    meals: [],
-    workouts: [],
-    sleepSchedule: {
-      bedtime: data.sleepSchedule.preferredBedtime,
-      wakeTime: data.sleepSchedule.preferredWakeTime,
-      duration: data.sleepSchedule.totalSleepHours,
-    },
-  };
-
-  // Generate mock meals
-  const mealCategories = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
-  const mealNames = {
-    Breakfast: ['Oatmeal with fruits', 'Greek yogurt with granola', 'Eggs and toast'],
-    Lunch: ['Chicken salad', 'Quinoa bowl', 'Tuna wrap'],
-    Dinner: ['Grilled salmon', 'Stir-fry vegetables', 'Turkey meatballs'],
-    Snacks: ['Mixed nuts', 'Protein shake', 'Fruit smoothie'],
-  };
-
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    mealCategories.forEach((category) => {
-      const mealName = mealNames[category as keyof typeof mealNames][
-        Math.floor(Math.random() * mealNames[category as keyof typeof mealNames].length)
-      ];
-      mockRoutine.meals.push({
-        id: Date.now().toString() + i + category,
-        name: mealName,
-        calories: Math.floor(Math.random() * 500) + 300,
-        protein: Math.floor(Math.random() * 30) + 20,
-        carbs: Math.floor(Math.random() * 40) + 30,
-        fat: Math.floor(Math.random() * 20) + 10,
-        category,
-        date,
-        completed: false,
-      });
-    });
+  if (!OPENAI_API_KEY) {
+    throw new Error('OpenAI API key is not set. Please set the VITE_OPENAI_API_KEY environment variable.');
   }
 
-  // Generate mock workouts
-  const workoutTypes = data.workoutPreferences;
-  const workoutNames = {
-    strength: ['Upper Body', 'Lower Body', 'Full Body', 'Core'],
-    cardio: ['Running', 'Cycling', 'HIIT', 'Swimming'],
-    flexibility: ['Yoga', 'Stretching', 'Pilates', 'Mobility'],
-  };
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a professional health and wellness coach creating personalized routines. Provide detailed, specific, and realistic recommendations.'
+          },
+          {
+            role: 'user',
+            content: generatePrompt(data)
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 4000,
+      }),
+    });
 
-  for (let i = 0; i < 30; i++) {
-    const date = new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const type = workoutTypes[Math.floor(Math.random() * workoutTypes.length)];
-    const workoutName = workoutNames[type as keyof typeof workoutNames][
-      Math.floor(Math.random() * workoutNames[type as keyof typeof workoutNames].length)
-    ];
-
-    const workout: Workout = {
-      id: Date.now().toString() + i,
-      name: workoutName,
-      duration: Math.floor(Math.random() * 60) + 30,
-      caloriesBurned: Math.floor(Math.random() * 500) + 200,
-      date,
-      completed: false,
-      type: type as 'strength' | 'cardio' | 'flexibility',
-    };
-
-    if (type === 'strength') {
-      workout.exercises = [
-        {
-          name: 'Bench Press',
-          sets: 3,
-          reps: 12,
-          weight: 60,
-        },
-        {
-          name: 'Squats',
-          sets: 4,
-          reps: 10,
-          weight: 80,
-        },
-      ];
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.statusText}`);
     }
 
-    mockRoutine.workouts.push(workout);
+    const result = await response.json();
+    const routine = JSON.parse(result.choices[0].message.content);
+    return routine;
+  } catch (error) {
+    console.error('Error generating routine:', error);
+    throw error;
   }
-
-  return mockRoutine;
 }; 
