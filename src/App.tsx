@@ -1,6 +1,6 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@mui/material';
-import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import MealTracking from './pages/MealTracking';
@@ -20,7 +20,7 @@ const theme = createTheme({
   },
 });
 
-function App() {
+const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -37,6 +37,6 @@ function App() {
       </Router>
     </ThemeProvider>
   );
-}
+};
 
 export default App; 

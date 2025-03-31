@@ -1,11 +1,15 @@
 import { Routine, Workout, QuestionnaireData } from '../store/useStore';
+import { format, addDays } from 'date-fns';
 
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
 const generatePrompt = (data: QuestionnaireData): string => {
   const { generalInfo, wellnessPreferences } = data;
+  const today = new Date();
+  const startDate = format(today, 'yyyy-MM-dd');
+  const endDate = format(addDays(today, 30), 'yyyy-MM-dd');
   
-  return `Create a personalized 30-day health and wellness routine for a ${generalInfo.age} year old ${generalInfo.biologicalSex} with the following characteristics:
+  return `Create a personalized 30-day health and wellness routine starting from ${startDate} for a ${generalInfo.age} year old ${generalInfo.biologicalSex} with the following characteristics:
 - Height: ${generalInfo.height}cm
 - Weight: ${generalInfo.weight}kg
 - Activity Level: ${generalInfo.activityLevel}
@@ -29,8 +33,8 @@ Please generate a detailed 30-day routine that includes:
 Format the response as a JSON object with the following structure:
 {
   "id": "string",
-  "startDate": "YYYY-MM-DD",
-  "endDate": "YYYY-MM-DD",
+  "startDate": "${startDate}",
+  "endDate": "${endDate}",
   "meals": [
     {
       "id": "string",

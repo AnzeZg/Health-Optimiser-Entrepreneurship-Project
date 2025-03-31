@@ -1,196 +1,227 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Button,
+  Paper,
   Typography,
+  Button,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
   List,
   ListItem,
   ListItemText,
   Divider,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
 } from '@mui/material';
 import { useStore } from '../store/useStore';
-import { format } from 'date-fns';
+import { format, addDays, subDays } from 'date-fns';
 import Questionnaire from '../components/Questionnaire';
 
-const Calendar: React.FC = () => {
+const Calendar: React.FC = (): JSX.Element => {
   const { routine, setRoutine } = useStore();
-  const [showSetup, setShowSetup] = useState(!routine);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [openQuestionnaire, setOpenQuestionnaire] = useState(false);
 
-  const handleSetupClick = () => {
-    setShowSetup(false);
+  const handleDateChange = (e: SelectChangeEvent<string>) => {
+    setSelectedDate(new Date(e.target.value));
+  };
+
+  const handleOpenQuestionnaire = () => {
     setOpenQuestionnaire(true);
+  };
+
+  const handleCloseQuestionnaire = () => {
+    setOpenQuestionnaire(false);
   };
 
   const handleResetRoutine = () => {
     setRoutine(null);
-    setShowSetup(true);
   };
 
-  const renderRoutine = () => {
+  const getActivitiesForDate = (date: Date) => {
     if (!routine) return null;
 
-    return (
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Typography variant="h5" gutterBottom>
-            Your Custom Routine
-          </Typography>
-          <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-            {format(new Date(routine.startDate), 'MMMM d, yyyy')} -{' '}
-            {format(new Date(routine.endDate), 'MMMM d, yyyy')}
-          </Typography>
-        </Grid>
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const meals = routine.meals.filter(meal => meal.date === dateStr);
+    const workouts = routine.workouts.filter(workout => workout.date === dateStr);
+    const sleepSchedule = routine.sleepSchedule;
 
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Sleep Schedule
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemText
-                    primary="Bedtime"
-                    secondary={routine.sleepSchedule.bedtime}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Wake Time"
-                    secondary={routine.sleepSchedule.wakeTime}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Duration"
-                    secondary={`${routine.sleepSchedule.duration} hours`}
-                  />
-                </ListItem>
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Planned Workouts
-              </Typography>
-              <List>
-                {routine.workouts.map((workout) => (
-                  <React.Fragment key={workout.id}>
-                    <ListItem>
-                      <ListItemText
-                        primary={workout.name}
-                        secondary={`${format(new Date(workout.date), 'MMM dd, yyyy')} • ${workout.duration} minutes • ${workout.caloriesBurned} calories`}
-                      />
-                    </ListItem>
-                    {workout.exercises && (
-                      <List>
-                        {workout.exercises.map((exercise, index) => (
-                          <ListItem key={index}>
-                            <ListItemText
-                              primary={exercise.name}
-                              secondary={`${exercise.sets} sets × ${exercise.reps} reps${
-                                exercise.weight ? ` • ${exercise.weight}kg` : ''
-                              }`}
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    )}
-                    <Divider />
-                  </React.Fragment>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Planned Meals
-              </Typography>
-              <List>
-                {routine.meals.map((meal) => (
-                  <React.Fragment key={meal.id}>
-                    <ListItem>
-                      <ListItemText
-                        primary={meal.name}
-                        secondary={`${format(new Date(meal.date), 'MMM dd, yyyy')} • ${meal.calories} calories • Protein: ${meal.protein}g • Carbs: ${meal.carbs}g • Fat: ${meal.fat}g`}
-                      />
-                    </ListItem>
-                    <Divider />
-                  </React.Fragment>
-                ))}
-              </List>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    );
+    return {
+      meals,
+      workouts,
+      sleepSchedule,
+    };
   };
+
+  const activities = getActivitiesForDate(selectedDate);
+
+  // Generate date options for the next 30 days
+  const dateOptions = Array.from({ length: 30 }, (_, i) => {
+    const date = addDays(new Date(), i);
+    return {
+      value: format(date, 'yyyy-MM-dd'),
+      label: format(date, 'EEEE, MMMM d, yyyy'),
+    };
+  });
 
   return (
     <Box>
-      {showSetup ? (
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            minHeight: '60vh',
-          }}
-        >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4">Calendar</Typography>
+        {routine ? (
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={handleResetRoutine}
+          >
+            Reset Routine
+          </Button>
+        ) : (
           <Button
             variant="contained"
-            size="large"
-            onClick={handleSetupClick}
-            sx={{ fontSize: '1.2rem', padding: '1rem 2rem' }}
+            onClick={handleOpenQuestionnaire}
           >
-            Set Up Your Routine
+            Generate Routine
           </Button>
-        </Box>
-      ) : (
-        <>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h5">
-              Your Custom Routine
+        )}
+      </Box>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>Select Date</InputLabel>
+              <Select
+                value={format(selectedDate, 'yyyy-MM-dd')}
+                onChange={handleDateChange}
+                label="Select Date"
+              >
+                {dateOptions.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              {format(selectedDate, 'MMMM d, yyyy')}
             </Typography>
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={handleResetRoutine}
-            >
-              Reset Routine
-            </Button>
-          </Box>
-          {renderRoutine()}
-        </>
-      )}
+
+            {activities ? (
+              <>
+                {/* Sleep Schedule */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Sleep Schedule
+                  </Typography>
+                  <Typography variant="body2">
+                    Bedtime: {activities.sleepSchedule.bedtime}
+                  </Typography>
+                  <Typography variant="body2">
+                    Wake Time: {activities.sleepSchedule.wakeTime}
+                  </Typography>
+                  <Typography variant="body2">
+                    Target Duration: {activities.sleepSchedule.duration} hours
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                {/* Meals */}
+                <Box sx={{ mb: 3 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Meals
+                  </Typography>
+                  {activities.meals.length > 0 ? (
+                    <List dense>
+                      {activities.meals.map((meal) => (
+                        <ListItem key={meal.id}>
+                          <ListItemText
+                            primary={meal.name}
+                            secondary={`${meal.calories} calories • ${meal.protein}g protein • ${meal.carbs}g carbs • ${meal.fat}g fat`}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No meals planned for this day.
+                    </Typography>
+                  )}
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                {/* Workouts */}
+                <Box>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Workouts
+                  </Typography>
+                  {activities.workouts.length > 0 ? (
+                    <List dense>
+                      {activities.workouts.map((workout) => (
+                        <ListItem key={workout.id}>
+                          <ListItemText
+                            primary={workout.name}
+                            secondary={
+                              <>
+                                <Typography component="span" variant="body2">
+                                  Duration: {workout.duration} minutes
+                                </Typography>
+                                <br />
+                                <Typography component="span" variant="body2">
+                                  Calories Burned: {workout.caloriesBurned}
+                                </Typography>
+                                <br />
+                                <Typography component="span" variant="body2">
+                                  Type: {workout.type}
+                                </Typography>
+                              </>
+                            }
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No workouts planned for this day.
+                    </Typography>
+                  )}
+                </Box>
+              </>
+            ) : (
+              <Typography color="text.secondary">
+                No routine available. Generate a routine to see your schedule.
+              </Typography>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
 
       <Dialog
         open={openQuestionnaire}
-        onClose={() => setOpenQuestionnaire(false)}
+        onClose={handleCloseQuestionnaire}
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Create Your Custom Routine</DialogTitle>
+        <DialogTitle>Generate Your Routine</DialogTitle>
         <DialogContent>
           <Questionnaire />
         </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseQuestionnaire}>Cancel</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

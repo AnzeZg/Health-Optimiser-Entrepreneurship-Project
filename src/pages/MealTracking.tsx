@@ -188,12 +188,12 @@ const MealTracking: React.FC = (): JSX.Element => {
         </Grid>
 
         {/* Routine Meals */}
-        {routineMeals.length > 0 && (
-          <Grid item xs={12}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Today's Meal Plan
-              </Typography>
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Today's Meal Plan
+            </Typography>
+            {routineMeals.length > 0 ? (
               <List>
                 {routineMeals.map((meal) => (
                   <React.Fragment key={meal.id}>
@@ -212,9 +212,13 @@ const MealTracking: React.FC = (): JSX.Element => {
                   </React.Fragment>
                 ))}
               </List>
-            </Paper>
-          </Grid>
-        )}
+            ) : (
+              <Typography color="text.secondary" align="center">
+                No meals planned for this day. Set up your routine in the Calendar page to see your meal plan.
+              </Typography>
+            )}
+          </Paper>
+        </Grid>
 
         {/* Custom Meals */}
         <Grid item xs={12}>

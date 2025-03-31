@@ -66,7 +66,8 @@ export interface SleepEntry {
   bedtime: string;
   wakeTime: string;
   duration: number;
-  quality?: number;
+  quality: number;
+  notes?: string;
 }
 
 export interface Routine {
@@ -82,12 +83,30 @@ export interface Routine {
   };
 }
 
+export interface Friend {
+  id: string;
+  name: string;
+  score: number;
+  avatar: string;
+  lastActive: string;
+}
+
+export interface DailyScore {
+  date: string;
+  score: number;
+  mealScore: number;
+  workoutScore: number;
+  sleepScore: number;
+}
+
 interface HealthStore {
   meals: Meal[];
   workouts: Workout[];
   sleepEntries: SleepEntry[];
   routine: Routine | null;
   questionnaireData: QuestionnaireData | null;
+  dailyScores: DailyScore[];
+  friends: Friend[];
   addMeal: (meal: Omit<Meal, 'id'>) => void;
   deleteMeal: (id: string) => void;
   addWorkout: (workout: Omit<Workout, 'id'>) => void;
@@ -98,64 +117,131 @@ interface HealthStore {
   setQuestionnaireData: (data: QuestionnaireData) => void;
   updateMealStatus: (id: string, completed: boolean) => void;
   updateWorkoutStatus: (id: string, completed: boolean) => void;
+  calculateTodayScore: () => number;
+  getTodayScore: () => DailyScore;
 }
+
+// Placeholder friend data
+const mockFriends: Friend[] = [
+  {
+    id: '1',
+    name: 'Sarah Johnson',
+    score: 85,
+    avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+    lastActive: '2 hours ago',
+  },
+  {
+    id: '2',
+    name: 'Michael Chen',
+    score: 92,
+    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+    lastActive: '1 day ago',
+  },
+  {
+    id: '3',
+    name: 'Emma Wilson',
+    score: 78,
+    avatar: 'https://randomuser.me/api/portraits/women/66.jpg',
+    lastActive: '5 hours ago',
+  },
+  {
+    id: '4',
+    name: 'James Thompson',
+    score: 65,
+    avatar: 'https://randomuser.me/api/portraits/men/41.jpg',
+    lastActive: '3 days ago',
+  },
+  {
+    id: '5',
+    name: 'Olivia Rodriguez',
+    score: 88,
+    avatar: 'https://randomuser.me/api/portraits/women/29.jpg',
+    lastActive: 'Just now',
+  },
+];
 
 export const useStore = create<HealthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       meals: [],
       workouts: [],
       sleepEntries: [],
       routine: null,
       questionnaireData: null,
+      dailyScores: [],
+      friends: mockFriends,
 
       addMeal: (meal) =>
-        set((state) => ({
-          meals: [
-            ...state.meals,
-            {
-              ...meal,
-              id: Date.now().toString(),
-            },
-          ],
-        })),
+        set((state) => {
+          const newState = {
+            meals: [
+              ...state.meals,
+              {
+                ...meal,
+                id: Date.now().toString(),
+              },
+            ],
+          };
+          get().calculateTodayScore();
+          return newState;
+        }),
 
       deleteMeal: (id) =>
-        set((state) => ({
-          meals: state.meals.filter((meal) => meal.id !== id),
-        })),
+        set((state) => {
+          const newState = {
+            meals: state.meals.filter((meal) => meal.id !== id),
+          };
+          get().calculateTodayScore();
+          return newState;
+        }),
 
       addWorkout: (workout) =>
-        set((state) => ({
-          workouts: [
-            ...state.workouts,
-            {
-              ...workout,
-              id: Date.now().toString(),
-            },
-          ],
-        })),
+        set((state) => {
+          const newState = {
+            workouts: [
+              ...state.workouts,
+              {
+                ...workout,
+                id: Date.now().toString(),
+              },
+            ],
+          };
+          get().calculateTodayScore();
+          return newState;
+        }),
 
       deleteWorkout: (id) =>
-        set((state) => ({
-          workouts: state.workouts.filter((workout) => workout.id !== id),
-        })),
+        set((state) => {
+          const newState = {
+            workouts: state.workouts.filter((workout) => workout.id !== id),
+          };
+          get().calculateTodayScore();
+          return newState;
+        }),
 
       addSleepEntry: (entry) =>
-        set((state) => ({
-          sleepEntries: [
-            ...state.sleepEntries,
-            {
-              ...entry,
-              id: Date.now().toString(),
-            },
-          ],
-        })),
+        set((state) => {
+          const newState = {
+            sleepEntries: [
+              ...state.sleepEntries,
+              {
+                ...entry,
+                id: Date.now().toString(),
+              },
+            ],
+          };
+          get().calculateTodayScore();
+          return newState;
+        }),
 
       deleteSleepEntry: (id) =>
-        set((state) => ({
-          sleepEntries: state.sleepEntries.filter((entry) => entry.id !== id),
-        })),
+        set((state) => {
+          const newState = {
+            sleepEntries: state.sleepEntries.filter((entry) => entry.id !== id),
+          };
+          get().calculateTodayScore();
+          return newState;
+        }),
 
       setRoutine: (routine) =>
         set(() => ({
@@ -175,7 +261,7 @@ export const useStore = create<HealthStore>()(
           const updatedMeal = { ...routineMeal, completed };
           const existingMeal = state.meals.find((meal) => meal.id === id);
 
-          return {
+          const newState = {
             meals: existingMeal
               ? state.meals.map((meal) => (meal.id === id ? updatedMeal : meal))
               : [...state.meals, updatedMeal],
@@ -188,6 +274,9 @@ export const useStore = create<HealthStore>()(
                 }
               : null,
           };
+          
+          get().calculateTodayScore();
+          return newState;
         }),
 
       updateWorkoutStatus: (id, completed) =>
@@ -198,7 +287,7 @@ export const useStore = create<HealthStore>()(
           const updatedWorkout = { ...routineWorkout, completed };
           const existingWorkout = state.workouts.find((workout) => workout.id === id);
 
-          return {
+          const newState = {
             workouts: existingWorkout
               ? state.workouts.map((workout) => (workout.id === id ? updatedWorkout : workout))
               : [...state.workouts, updatedWorkout],
@@ -211,7 +300,97 @@ export const useStore = create<HealthStore>()(
                 }
               : null,
           };
+          
+          get().calculateTodayScore();
+          return newState;
         }),
+
+      calculateTodayScore: () => {
+        const state = get();
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Calculate meal score
+        let mealScore = 0;
+        if (state.routine) {
+          const todayMeals = state.routine.meals.filter(meal => meal.date === today);
+          if (todayMeals.length > 0) {
+            const completedMeals = todayMeals.filter(meal => meal.completed).length;
+            mealScore = Math.round((completedMeals / todayMeals.length) * 40);
+          }
+        }
+        
+        // Calculate workout score
+        let workoutScore = 0;
+        if (state.routine) {
+          const todayWorkouts = state.routine.workouts.filter(workout => workout.date === today);
+          if (todayWorkouts.length > 0) {
+            const completedWorkouts = todayWorkouts.filter(workout => workout.completed).length;
+            workoutScore = Math.round((completedWorkouts / todayWorkouts.length) * 40);
+          }
+        }
+        
+        // Calculate sleep score
+        let sleepScore = 0;
+        const todaySleepEntries = state.sleepEntries.filter(entry => entry.date === today);
+        if (todaySleepEntries.length > 0) {
+          const qualityAvg = todaySleepEntries.reduce((sum, entry) => sum + entry.quality, 0) / todaySleepEntries.length;
+          sleepScore = Math.round((qualityAvg / 10) * 20);
+        }
+        
+        // Calculate total score
+        const totalScore = mealScore + workoutScore + sleepScore;
+        
+        // Update or create today's score
+        set((state) => {
+          const existingScoreIndex = state.dailyScores.findIndex(score => score.date === today);
+          if (existingScoreIndex !== -1) {
+            const updatedScores = [...state.dailyScores];
+            updatedScores[existingScoreIndex] = {
+              date: today,
+              score: totalScore,
+              mealScore,
+              workoutScore,
+              sleepScore
+            };
+            return { dailyScores: updatedScores };
+          } else {
+            return {
+              dailyScores: [
+                ...state.dailyScores,
+                {
+                  date: today,
+                  score: totalScore,
+                  mealScore,
+                  workoutScore,
+                  sleepScore
+                }
+              ]
+            };
+          }
+        });
+        
+        return totalScore;
+      },
+      
+      getTodayScore: () => {
+        const state = get();
+        const today = new Date().toISOString().split('T')[0];
+        const score = state.dailyScores.find(score => score.date === today);
+        
+        if (score) {
+          return score;
+        }
+        
+        // If no score exists for today, calculate it
+        const totalScore = get().calculateTodayScore();
+        return {
+          date: today,
+          score: totalScore,
+          mealScore: 0,
+          workoutScore: 0,
+          sleepScore: 0
+        };
+      }
     }),
     {
       name: 'health-storage',
