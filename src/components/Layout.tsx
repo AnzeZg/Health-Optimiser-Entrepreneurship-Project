@@ -22,6 +22,7 @@ import {
   FitnessCenter as FitnessCenterIcon,
   Bedtime as BedtimeIcon,
   CalendarMonth as CalendarIcon,
+  Chat as ChatIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -43,6 +44,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: 'Workouts', icon: <FitnessCenterIcon />, path: '/workouts' },
     { text: 'Sleep', icon: <BedtimeIcon />, path: '/sleep' },
     { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
+    { text: 'Chat Assistant', icon: <ChatIcon />, path: '/chat' },
   ];
 
   const handleDrawerToggle = () => {
