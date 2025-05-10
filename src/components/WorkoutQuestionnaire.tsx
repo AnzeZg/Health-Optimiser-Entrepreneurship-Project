@@ -464,7 +464,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
             { value: 'weight', label: '⚖️ Weight' },
             { value: 'mood', label: '🧠 Mood & energy' },
             { value: 'prs', label: '📊 Personal records (PRs)' },
-            { value: 'none', label: '🚫 Don't want to track anything' },
+            { value: 'none', label: "🚫 Don't want to track anything" },
           ].map((method) => (
             <Grid item key={method.value}>
               <Chip
