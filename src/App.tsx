@@ -35,7 +35,7 @@ const App: React.FC = () => {
             <Route path="/sleep" element={<SleepTracking />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/chat" element={<ChatbotPage />} />
-            <Route path="/workout-questionnaire" element={<WorkoutQuestionnairePage />} />
+            <Route path="/workout-plan" element={<WorkoutQuestionnairePage />} />
           </Routes>
         </Layout>
       </Router>
