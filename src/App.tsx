@@ -7,6 +7,7 @@ import MealTracking from './pages/MealTracking';
 import WorkoutLogging from './pages/WorkoutLogging';
 import SleepTracking from './pages/SleepTracking';
 import Calendar from './pages/Calendar';
+import Competitions from './pages/Competitions';
 import ChatbotPage from './pages/ChatbotPage';
 import WorkoutQuestionnairePage from './pages/WorkoutQuestionnairePage';
 
@@ -34,6 +35,7 @@ const App: React.FC = () => {
             <Route path="/workouts" element={<WorkoutLogging />} />
             <Route path="/sleep" element={<SleepTracking />} />
             <Route path="/calendar" element={<Calendar />} />
+            <Route path="/competitions" element={<Competitions />} />
             <Route path="/chat" element={<ChatbotPage />} />
             <Route path="/workout-plan" element={<WorkoutQuestionnairePage />} />
           </Routes>
