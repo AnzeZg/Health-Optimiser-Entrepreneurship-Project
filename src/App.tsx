@@ -8,6 +8,7 @@ import WorkoutLogging from './pages/WorkoutLogging';
 import SleepTracking from './pages/SleepTracking';
 import Calendar from './pages/Calendar';
 import Competitions from './pages/Competitions';
+import ChatbotPage from './pages/ChatbotPage';
 
 const theme = createTheme({
   palette: {
@@ -34,6 +35,7 @@ const App: React.FC = () => {
             <Route path="/sleep" element={<SleepTracking />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/competitions" element={<Competitions />} />
+            <Route path="/chat" element={<ChatbotPage />} />
           </Routes>
         </Layout>
       </Router>

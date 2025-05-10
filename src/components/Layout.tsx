@@ -24,6 +24,7 @@ import {
   Bedtime as BedtimeIcon,
   CalendarMonth as CalendarIcon,
   EmojiEvents as EmojiEventsIcon,
+  Chat as ChatIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -46,6 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { text: 'Workout Logging', icon: <FitnessCenterIcon />, path: '/workouts' },
     { text: 'Sleep Tracking', icon: <BedtimeIcon />, path: '/sleep' },
     { text: 'Competitions', icon: <EmojiEventsIcon />, path: '/competitions' },
+    { text: 'Chat Assistant', icon: <ChatIcon />, path: '/chat' },
   ];
 
   const handleDrawerToggle = () => {
