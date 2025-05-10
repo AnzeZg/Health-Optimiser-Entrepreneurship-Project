@@ -124,9 +124,9 @@ const Dashboard: React.FC = () => {
         {!routine && (
           <Button
             variant="contained"
-            onClick={() => navigate('/calendar')}
+            onClick={() => navigate('/workout-plan')}
           >
-            Set Up Your Routine
+            Set Up Your Workout Plan
           </Button>
         )}
       </Box>

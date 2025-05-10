@@ -21,7 +21,7 @@ import {
 } from '@mui/material';
 import { useStore } from '../store/useStore';
 import { format, addDays, subDays } from 'date-fns';
-import Questionnaire from '../components/Questionnaire';
+import { WorkoutQuestionnaire } from '../components/WorkoutQuestionnaire';
 
 const Calendar: React.FC = (): JSX.Element => {
   const { routine, setRoutine } = useStore();
@@ -217,7 +217,7 @@ const Calendar: React.FC = (): JSX.Element => {
       >
         <DialogTitle>Generate Your Routine</DialogTitle>
         <DialogContent>
-          <Questionnaire />
+          <WorkoutQuestionnaire />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseQuestionnaire}>Cancel</Button>
