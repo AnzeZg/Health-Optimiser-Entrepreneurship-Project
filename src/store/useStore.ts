@@ -99,6 +99,19 @@ export interface DailyScore {
   sleepScore: number;
 }
 
+interface Competition {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  dateRange: string;
+  reward: string;
+  status: 'active' | 'upcoming' | 'completed';
+  type: 'fitness' | 'nutrition' | 'team';
+  progress: number;
+  joined: boolean;
+}
+
 interface HealthStore {
   meals: Meal[];
   workouts: Workout[];
@@ -119,6 +132,10 @@ interface HealthStore {
   updateWorkoutStatus: (id: string, completed: boolean) => void;
   calculateTodayScore: () => number;
   getTodayScore: () => DailyScore;
+  competitions: Competition[];
+  joinCompetition: (id: number) => void;
+  leaveCompetition: (id: number) => void;
+  updateCompetitionProgress: (id: number, progress: number) => void;
 }
 
 // Placeholder friend data
@@ -170,6 +187,7 @@ export const useStore = create<HealthStore>()(
       questionnaireData: null,
       dailyScores: [],
       friends: mockFriends,
+      competitions: [],
 
       addMeal: (meal) =>
         set((state) => {
@@ -390,7 +408,28 @@ export const useStore = create<HealthStore>()(
           workoutScore: 0,
           sleepScore: 0
         };
-      }
+      },
+
+      joinCompetition: (id) =>
+        set((state) => ({
+          competitions: state.competitions.map((comp) =>
+            comp.id === id ? { ...comp, joined: true, progress: 0 } : comp
+          ),
+        })),
+
+      leaveCompetition: (id) =>
+        set((state) => ({
+          competitions: state.competitions.map((comp) =>
+            comp.id === id ? { ...comp, joined: false, progress: 0 } : comp
+          ),
+        })),
+
+      updateCompetitionProgress: (id, progress) =>
+        set((state) => ({
+          competitions: state.competitions.map((comp) =>
+            comp.id === id ? { ...comp, progress } : comp
+          ),
+        })),
     }),
     {
       name: 'health-storage',

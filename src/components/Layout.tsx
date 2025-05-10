@@ -14,6 +14,7 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
+  Divider,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -22,6 +23,7 @@ import {
   FitnessCenter as FitnessCenterIcon,
   Bedtime as BedtimeIcon,
   CalendarMonth as CalendarIcon,
+  EmojiEvents as EmojiEventsIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -39,10 +41,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-    { text: 'Meals', icon: <RestaurantIcon />, path: '/meals' },
-    { text: 'Workouts', icon: <FitnessCenterIcon />, path: '/workouts' },
-    { text: 'Sleep', icon: <BedtimeIcon />, path: '/sleep' },
     { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
+    { text: 'Meal Tracking', icon: <RestaurantIcon />, path: '/meals' },
+    { text: 'Workout Logging', icon: <FitnessCenterIcon />, path: '/workouts' },
+    { text: 'Sleep Tracking', icon: <BedtimeIcon />, path: '/sleep' },
+    { text: 'Competitions', icon: <EmojiEventsIcon />, path: '/competitions' },
   ];
 
   const handleDrawerToggle = () => {
@@ -51,7 +54,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const drawer = (
     <div>
-      <Toolbar />
+      <Toolbar>
+        <Typography variant="h6" noWrap component="div">
+          Health Optimizer
+        </Typography>
+      </Toolbar>
+      <Divider />
       <List>
         {menuItems.map((item) => (
           <ListItem
@@ -59,7 +67,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             key={item.text}
             onClick={() => {
               navigate(item.path);
-              if (isMobile) setMobileOpen(false);
+              if (isMobile) {
+                setMobileOpen(false);
+              }
             }}
             selected={location.pathname === item.path}
           >
@@ -92,7 +102,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Health Optimizer
+            {menuItems.find((item) => item.path === location.pathname)?.text || 'Health Optimizer'}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -140,6 +150,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          mt: '64px',
         }}
       >
         <Toolbar />
