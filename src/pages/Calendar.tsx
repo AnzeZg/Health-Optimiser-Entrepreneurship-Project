@@ -109,7 +109,18 @@ const Calendar: React.FC = (): JSX.Element => {
         </Box>
         <Grid container spacing={4}>
           <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 2, borderRadius: 4, boxShadow: 2 }}>
+            <Paper sx={{
+              p: 2,
+              borderRadius: 4,
+              boxShadow: 4,
+              bgcolor: '#e3f2fd',
+              border: '1.5px solid #90caf9',
+              minWidth: 0,
+              width: { xs: '100%', sm: 400 },
+              maxWidth: 440,
+              overflow: 'hidden',
+              position: 'relative',
+            }}>
               <DateCalendar
                 value={selectedDate}
                 onChange={(date) => date && setSelectedDate(date)}
@@ -218,7 +229,7 @@ const Calendar: React.FC = (): JSX.Element => {
       >
         <DialogTitle>Generate Your Routine</DialogTitle>
         <DialogContent>
-          <WorkoutQuestionnaire />
+          <WorkoutQuestionnaire onRoutineGenerated={handleCloseQuestionnaire} />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseQuestionnaire}>Cancel</Button>

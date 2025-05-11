@@ -23,35 +23,24 @@ import {
   FormControl,
   InputLabel,
   ListItemSecondaryAction,
+  Collapse,
+  CardMedia,
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useStore } from '../store/useStore';
+import { Add as AddIcon, Delete as DeleteIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
+import { useStore, Workout } from '../store/useStore';
 import { format, subDays } from 'date-fns';
 import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-
-interface Workout {
-  id: string;
-  name: string;
-  duration: number;
-  caloriesBurned?: number;
-  date: string;
-  completed?: boolean;
-  type: 'strength' | 'cardio' | 'flexibility';
-  exercises?: {
-    name: string;
-    sets: number;
-    reps: number;
-    weight?: number;
-  }[];
-}
+import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
 
 const WorkoutLogging: React.FC = () => {
   const { routine, workouts, addWorkout, deleteWorkout, updateWorkoutStatus } = useStore();
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [expandedWorkout, setExpandedWorkout] = useState<string | null>(null);
+  const [videoDialog, setVideoDialog] = useState<{ open: boolean; url: string | null }>({ open: false, url: null });
   const [newWorkout, setNewWorkout] = useState<Partial<Workout>>({
     name: '',
     duration: 0,
@@ -78,13 +67,113 @@ const WorkoutLogging: React.FC = () => {
   const handleAddWorkout = () => {
     if (!newWorkout.name || !newWorkout.duration) return;
 
-    addWorkout(newWorkout as Omit<Workout, 'id'>);
+    // Ensure all required properties are present
+    const workoutToAdd = {
+      name: newWorkout.name,
+      duration: newWorkout.duration,
+      caloriesBurned: newWorkout.caloriesBurned ?? 0,
+      date: newWorkout.date ?? selectedDate,
+      completed: typeof newWorkout.completed === 'boolean' ? newWorkout.completed : false,
+      type: newWorkout.type ?? 'strength',
+      exercises: newWorkout.exercises ?? [],
+      warmup: newWorkout.warmup ?? [],
+      cooldown: newWorkout.cooldown ?? [],
+      motivation: newWorkout.motivation ?? '',
+    };
+
+    addWorkout(workoutToAdd as Omit<Workout, 'id'>);
     handleCloseDialog();
   };
 
   const handleDeleteWorkout = (id: string) => {
     deleteWorkout(id);
   };
+
+  const handleExpandWorkout = (workoutId: string) => {
+    setExpandedWorkout(expandedWorkout === workoutId ? null : workoutId);
+  };
+
+  const handleVideoClick = (videoUrl: string) => {
+    setVideoDialog({ open: true, url: videoUrl });
+  };
+
+  const handleCloseVideoDialog = () => {
+    setVideoDialog({ open: false, url: null });
+  };
+
+  const renderWorkoutDetails = (workout: Workout) => (
+    <Collapse in={expandedWorkout === workout.id}>
+      <Box sx={{ pl: 4, pr: 2, py: 2 }}>
+        {workout.warmup && workout.warmup.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" color="primary" gutterBottom>
+              Warm-up Exercises
+            </Typography>
+            <List dense>
+              {workout.warmup.map((exercise, index) => (
+                <ListItem key={index} sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <ListItemText
+                    primary={exercise.name}
+                    secondary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <PlayCircleOutlineIcon fontSize="small" color="primary" />
+                      <Typography variant="body2" color="text.secondary">Watch demonstration</Typography>
+                    </Box>}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        )}
+
+        {workout.exercises && workout.exercises.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" color="primary" gutterBottom>
+              Main Exercises
+            </Typography>
+            <List dense>
+              {workout.exercises.map((exercise, index) => (
+                <ListItem key={index} sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <ListItemText
+                    primary={exercise.name}
+                    secondary={`${exercise.sets} sets × ${exercise.reps} reps${exercise.weight ? ` • ${exercise.weight}kg` : ''}`}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        )}
+
+        {workout.cooldown && workout.cooldown.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" color="primary" gutterBottom>
+              Cool-down Exercises
+            </Typography>
+            <List dense>
+              {workout.cooldown.map((exercise, index) => (
+                <ListItem key={index} sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <ListItemText
+                    primary={exercise.name}
+                    secondary={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <PlayCircleOutlineIcon fontSize="small" color="primary" />
+                      <Typography variant="body2" color="text.secondary">Watch demonstration</Typography>
+                    </Box>}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Box>
+        )}
+
+        {workout.motivation && (
+          <Box sx={{ mt: 2, p: 2, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+              💪 {workout.motivation}
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </Collapse>
+  );
 
   const totalCaloriesBurned = workouts
     .filter((workout) => workout.date === selectedDate)
@@ -175,29 +264,35 @@ const WorkoutLogging: React.FC = () => {
                 <List>
                   {routineWorkouts.map((workout) => (
                     <React.Fragment key={workout.id}>
-                      <ListItem sx={{ borderRadius: 2, mb: 1, bgcolor: '#f3e5f5' }}>
+                      <ListItem 
+                        sx={{ 
+                          borderRadius: 2, 
+                          mb: 1, 
+                          bgcolor: '#f3e5f5',
+                          cursor: 'pointer',
+                          '&:hover': {
+                            bgcolor: '#e1bee7',
+                          },
+                        }}
+                        onClick={() => handleExpandWorkout(workout.id)}
+                      >
                         <Checkbox
                           checked={workout.completed}
-                          onChange={(e) => updateWorkoutStatus(workout.id, e.target.checked)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            updateWorkoutStatus(workout.id, e.target.checked);
+                          }}
                           sx={{ mr: 2 }}
                         />
                         <ListItemText
                           primary={<Typography fontWeight={600}>{workout.name}</Typography>}
                           secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories`}
                         />
+                        <IconButton size="small">
+                          {expandedWorkout === workout.id ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        </IconButton>
                       </ListItem>
-                      {workout.exercises && (
-                        <List>
-                          {workout.exercises.map((exercise, index) => (
-                            <ListItem key={index}>
-                              <ListItemText
-                                primary={exercise.name}
-                                secondary={`${exercise.sets} sets × ${exercise.reps} reps${exercise.weight ? ` • ${exercise.weight}kg` : ''}`}
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
-                      )}
+                      {renderWorkoutDetails(workout)}
                       <Divider />
                     </React.Fragment>
                   ))}
@@ -285,6 +380,33 @@ const WorkoutLogging: React.FC = () => {
               Add
             </Button>
           </DialogActions>
+        </Dialog>
+
+        {/* Video Dialog */}
+        <Dialog
+          open={videoDialog.open}
+          onClose={handleCloseVideoDialog}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogContent sx={{ p: 0, position: 'relative', paddingTop: '56.25%' }}>
+            {videoDialog.url && (
+              <iframe
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  border: 'none',
+                }}
+                src={`https://www.youtube.com/embed/${videoDialog.url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/)?.[1]}`}
+                title="Exercise demonstration"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            )}
+          </DialogContent>
         </Dialog>
       </Paper>
     </Box>

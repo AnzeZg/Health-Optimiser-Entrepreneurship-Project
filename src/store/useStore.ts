@@ -36,28 +36,40 @@ export interface Meal {
   id: string;
   name: string;
   calories: number;
-  protein?: number;
-  carbs?: number;
-  fat?: number;
-  category: string;
+  protein: number;
+  carbs: number;
+  fat: number;
+  category: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snacks';
   date: string;
-  completed?: boolean;
+  completed: boolean;
+  videoUrl?: string;
 }
 
 export interface Workout {
   id: string;
   name: string;
   duration: number;
-  caloriesBurned?: number;
+  caloriesBurned: number;
   date: string;
-  completed?: boolean;
+  completed: boolean;
   type: 'strength' | 'cardio' | 'flexibility';
   exercises?: {
     name: string;
     sets: number;
     reps: number;
     weight?: number;
+    rest?: string;
+    videoUrl?: string;
   }[];
+  warmup?: {
+    name: string;
+    videoUrl: string;
+  }[];
+  cooldown?: {
+    name: string;
+    videoUrl: string;
+  }[];
+  motivation?: string;
 }
 
 export interface SleepEntry {
@@ -70,12 +82,22 @@ export interface SleepEntry {
   notes?: string;
 }
 
+export interface RestDay {
+  date: string;
+  activities: {
+    name: string;
+    videoUrl: string;
+  }[];
+  motivation: string;
+}
+
 export interface Routine {
   id: string;
   startDate: string;
   endDate: string;
   meals: Meal[];
   workouts: Workout[];
+  restDays: RestDay[];
   sleepSchedule: {
     bedtime: string;
     wakeTime: string;
@@ -120,6 +142,7 @@ interface HealthStore {
   questionnaireData: QuestionnaireData | null;
   dailyScores: DailyScore[];
   friends: Friend[];
+  competitions: Competition[];
   addMeal: (meal: Omit<Meal, 'id'>) => void;
   deleteMeal: (id: string) => void;
   addWorkout: (workout: Omit<Workout, 'id'>) => void;
@@ -132,7 +155,6 @@ interface HealthStore {
   updateWorkoutStatus: (id: string, completed: boolean) => void;
   calculateTodayScore: () => number;
   getTodayScore: () => DailyScore;
-  competitions: Competition[];
   joinCompetition: (id: number) => void;
   leaveCompetition: (id: number) => void;
   updateCompetitionProgress: (id: number, progress: number) => void;

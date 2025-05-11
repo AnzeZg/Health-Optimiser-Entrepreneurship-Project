@@ -102,7 +102,11 @@ const mapToQuestionnaireData = (state: QuestionnaireState): QuestionnaireData =>
   },
 });
 
-export const WorkoutQuestionnaire: React.FC = () => {
+interface WorkoutQuestionnaireProps {
+  onRoutineGenerated?: () => void;
+}
+
+export const WorkoutQuestionnaire: React.FC<WorkoutQuestionnaireProps> = ({ onRoutineGenerated }) => {
   const [activeStep, setActiveStep] = useState(0);
   const [state, setState] = useState<QuestionnaireState>(initialState);
   const [loading, setLoading] = useState(false);
@@ -124,6 +128,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
       const data = mapToQuestionnaireData(state);
       const routine = await generateRoutine(data);
       setRoutine(routine);
+      if (onRoutineGenerated) onRoutineGenerated();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate routine. Please try again.');
     } finally {
@@ -140,9 +145,8 @@ export const WorkoutQuestionnaire: React.FC = () => {
       case 2:
         return !!state.workoutLocation && state.availableEquipment.length > 0 && !!state.dietType;
       case 3:
-        const injuriesValid = (state.injuries === 'no') || (state.injuries !== '' && state.injuries !== 'no');
-        const medicalValid = (state.medicalConditions === 'no') || (state.medicalConditions !== '' && state.medicalConditions !== 'no');
-        return injuriesValid && medicalValid && !!state.motivation;
+        // No validation for Health & Motivation section
+        return true;
       case 4:
         return state.progressTracking.length > 0 && !!state.checkInFrequency;
       default:
@@ -153,8 +157,8 @@ export const WorkoutQuestionnaire: React.FC = () => {
   const renderSection0 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>👤 Profile & Goals</Typography>
-      <Box mb={2}><TextField fullWidth label="Age" type="number" value={state.age} onChange={e => setState({ ...state, age: e.target.value })} /></Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #90caf9', borderRadius: 2, bgcolor: '#e3f2fd', p: 2 }}><TextField fullWidth label="Age" type="number" value={state.age} onChange={e => setState({ ...state, age: e.target.value })} /></Box>
+      <Box mb={2} sx={{ border: '2px solid #f48fb1', borderRadius: 2, bgcolor: '#fce4ec', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>Biological Sex</FormLabel>
           <RadioGroup value={state.biologicalSex} onChange={e => setState({ ...state, biologicalSex: e.target.value })}>
@@ -164,9 +168,9 @@ export const WorkoutQuestionnaire: React.FC = () => {
           </RadioGroup>
         </FormControl>
       </Box>
-      <Box mb={2}><TextField fullWidth label="Height (cm)" type="number" value={state.height} onChange={e => setState({ ...state, height: e.target.value })} /></Box>
-      <Box mb={2}><TextField fullWidth label="Weight (kg)" type="number" value={state.weight} onChange={e => setState({ ...state, weight: e.target.value })} /></Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #a5d6a7', borderRadius: 2, bgcolor: '#e8f5e9', p: 2 }}><TextField fullWidth label="Height (cm)" type="number" value={state.height} onChange={e => setState({ ...state, height: e.target.value })} /></Box>
+      <Box mb={2} sx={{ border: '2px solid #ffb74d', borderRadius: 2, bgcolor: '#fff3e0', p: 2 }}><TextField fullWidth label="Weight (kg)" type="number" value={state.weight} onChange={e => setState({ ...state, weight: e.target.value })} /></Box>
+      <Box mb={2} sx={{ border: '2px solid #ce93d8', borderRadius: 2, bgcolor: '#f3e5f5', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>Activity Level</FormLabel>
           <RadioGroup value={state.activityLevel} onChange={e => setState({ ...state, activityLevel: e.target.value })}>
@@ -178,7 +182,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
           </RadioGroup>
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #b0bec5', borderRadius: 2, bgcolor: '#eceff1', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>What is your primary fitness goal?</FormLabel>
           <RadioGroup value={state.primaryGoal} onChange={e => setState({ ...state, primaryGoal: e.target.value })}>
@@ -191,7 +195,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
           </RadioGroup>
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #ffd54f', borderRadius: 2, bgcolor: '#fffde7', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>Are you training for a specific event or deadline?</FormLabel>
           <RadioGroup value={state.trainingForEvent ? 'yes' : 'no'} onChange={e => setState({ ...state, trainingForEvent: e.target.value === 'yes' })}>
@@ -209,13 +213,13 @@ export const WorkoutQuestionnaire: React.FC = () => {
   const renderSection1 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>🏋️ Schedule & Fitness</Typography>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #90caf9', borderRadius: 2, bgcolor: '#e3f2fd', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>How many days per week can you work out?</FormLabel>
           <Slider value={state.daysPerWeek} onChange={(_, value) => setState({ ...state, daysPerWeek: value as number })} min={1} max={7} marks valueLabelDisplay="auto" />
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #f48fb1', borderRadius: 2, bgcolor: '#fce4ec', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>How long can your workouts be?</FormLabel>
           <RadioGroup value={state.workoutDuration} onChange={e => setState({ ...state, workoutDuration: e.target.value })}>
@@ -226,7 +230,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
           </RadioGroup>
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #a5d6a7', borderRadius: 2, bgcolor: '#e8f5e9', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>When do you prefer to train?</FormLabel>
           <RadioGroup value={state.preferredTime} onChange={e => setState({ ...state, preferredTime: e.target.value })}>
@@ -237,7 +241,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
           </RadioGroup>
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #ffb74d', borderRadius: 2, bgcolor: '#fff3e0', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>How would you rate your current fitness level?</FormLabel>
           <RadioGroup value={state.fitnessLevel} onChange={e => setState({ ...state, fitnessLevel: e.target.value })}>
@@ -253,7 +257,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
   const renderSection2 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>🏠 Equipment & Nutrition</Typography>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #90caf9', borderRadius: 2, bgcolor: '#e3f2fd', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>Where will you work out most often?</FormLabel>
           <RadioGroup value={state.workoutLocation} onChange={e => setState({ ...state, workoutLocation: e.target.value })}>
@@ -264,7 +268,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
           </RadioGroup>
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #f48fb1', borderRadius: 2, bgcolor: '#fce4ec', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>What equipment do you have access to?</FormLabel>
           <Grid container spacing={1} direction="column">
@@ -285,7 +289,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
           </Grid>
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #a5d6a7', borderRadius: 2, bgcolor: '#e8f5e9', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>Diet Type</FormLabel>
           <RadioGroup value={state.dietType} onChange={e => setState({ ...state, dietType: e.target.value })}>
@@ -303,7 +307,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
   const renderSection3 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>❤️ Health & Motivation</Typography>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #90caf9', borderRadius: 2, bgcolor: '#e3f2fd', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>Do you have any injuries or limitations?</FormLabel>
           <RadioGroup
@@ -324,7 +328,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
           )}
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #f48fb1', borderRadius: 2, bgcolor: '#fce4ec', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>Any medical conditions that affect your ability to train?</FormLabel>
           <RadioGroup
@@ -345,7 +349,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
           )}
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #a5d6a7', borderRadius: 2, bgcolor: '#e8f5e9', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>What motivates you to stay active?</FormLabel>
           <TextField fullWidth multiline rows={2} placeholder="e.g. Feeling better, achieving goals, social support..." value={state.motivation} onChange={e => setState({ ...state, motivation: e.target.value })} />
@@ -357,7 +361,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
   const renderSection4 = () => (
     <Box>
       <Typography variant="h6" gutterBottom>📈 Progress Tracking</Typography>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #90caf9', borderRadius: 2, bgcolor: '#e3f2fd', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>How would you like to track your progress?</FormLabel>
           <Grid container spacing={1} direction="column">
@@ -385,7 +389,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
           </Grid>
         </FormControl>
       </Box>
-      <Box mb={2}>
+      <Box mb={2} sx={{ border: '2px solid #f48fb1', borderRadius: 2, bgcolor: '#fce4ec', p: 2 }}>
         <FormControl fullWidth>
           <FormLabel>How often should we check in with you?</FormLabel>
           <RadioGroup value={state.checkInFrequency} onChange={e => setState({ ...state, checkInFrequency: e.target.value })}>
@@ -417,23 +421,35 @@ export const WorkoutQuestionnaire: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom align="center">
-          Workout Questionnaire
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: { xs: 1, sm: 3 } }}>
+      <Paper elevation={6} sx={{
+        p: { xs: 2, sm: 4 },
+        background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+        borderRadius: 4,
+        boxShadow: 6,
+      }}>
+        <Typography variant="h4" gutterBottom align="center" sx={{ fontWeight: 700, letterSpacing: 1, mb: 2 }}>
+          📝 Workout Questionnaire
         </Typography>
         <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
-          {sections.map((label) => (
+          {sections.map((label, idx) => (
             <Step key={label}>
-              <StepLabel>{label}</StepLabel>
+              <StepLabel icon={
+                idx === 0 ? '👤' :
+                idx === 1 ? '🏋️' :
+                idx === 2 ? '🏠' :
+                idx === 3 ? '❤️' :
+                idx === 4 ? '📈' : undefined
+              }>{label}</StepLabel>
             </Step>
           ))}
         </Stepper>
-        {renderStepContent(activeStep)}
+        <Box sx={{ mb: 2 }}>{renderStepContent(activeStep)}</Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
           <Button
             disabled={activeStep === 0}
             onClick={handleBack}
+            sx={{ borderRadius: 3, px: 3, fontWeight: 600 }}
           >
             Back
           </Button>
@@ -443,6 +459,7 @@ export const WorkoutQuestionnaire: React.FC = () => {
               color="primary"
               onClick={handleSubmit}
               disabled={!isSectionValid() || loading}
+              sx={{ borderRadius: 3, px: 4, fontWeight: 700, boxShadow: 2 }}
             >
               {loading ? <CircularProgress size={24} color="inherit" /> : 'Submit'}
             </Button>
@@ -452,11 +469,17 @@ export const WorkoutQuestionnaire: React.FC = () => {
               color="primary"
               onClick={handleNext}
               disabled={!isSectionValid()}
+              sx={{ borderRadius: 3, px: 4, fontWeight: 700, boxShadow: 2 }}
             >
               Next
             </Button>
           )}
         </Box>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
       </Paper>
     </Box>
   );

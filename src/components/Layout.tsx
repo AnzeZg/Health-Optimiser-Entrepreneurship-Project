@@ -43,11 +43,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const menuItems = [
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+    { text: 'Competitions', icon: <EmojiEventsIcon />, path: '/competitions' },
     { text: 'Calendar', icon: <CalendarIcon />, path: '/calendar' },
     { text: 'Meal Tracking', icon: <RestaurantIcon />, path: '/meals' },
     { text: 'Workout Logging', icon: <FitnessCenterIcon />, path: '/workouts' },
     { text: 'Sleep Tracking', icon: <BedtimeIcon />, path: '/sleep' },
-    { text: 'Competitions', icon: <EmojiEventsIcon />, path: '/competitions' },
     { text: 'Chat Assistant', icon: <ChatIcon />, path: '/chat' },
   ];
 
