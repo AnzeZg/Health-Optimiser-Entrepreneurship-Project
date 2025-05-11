@@ -17,82 +17,97 @@ import {
   Paper,
   Grid,
   Chip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
+import { useStore, QuestionnaireData } from '../store/useStore';
+import { generateRoutine } from '../services/routineService';
 
 interface QuestionnaireState {
-  // Section 1: Fitness Goals
+  // Section 1: Profile & Goals
+  age: string;
+  biologicalSex: string;
+  height: string;
+  weight: string;
+  activityLevel: string;
   primaryGoal: string;
-  secondaryGoal: string;
   trainingForEvent: boolean;
   eventDate?: string;
-
-  // Section 2: Schedule & Time
+  // Section 2: Schedule & Fitness
   daysPerWeek: number;
   workoutDuration: string;
   preferredTime: string;
-  restDays: string[];
-
-  // Section 3: Fitness Background
   fitnessLevel: string;
-  enjoyedWorkouts: string[];
-
-  // Section 4: Equipment & Access
+  // Section 3: Equipment & Nutrition
   workoutLocation: string;
   availableEquipment: string[];
-
-  // Section 5: Lifestyle & Nutrition
-  dietPlan: string;
-  mealPreparation: string;
-
-  // Section 6: Health & Safety
+  dietType: string;
+  // Section 4: Health & Motivation
   injuries: string;
   medicalConditions: string;
-
-  // Section 7: Motivation & Preferences
-  motivationFactors: string[];
-  workoutStyle: string;
-
-  // Section 8: Progress & Tracking
+  motivation: string;
+  // Section 5: Progress Tracking
   progressTracking: string[];
   checkInFrequency: string;
 }
 
 const initialState: QuestionnaireState = {
+  age: '',
+  biologicalSex: '',
+  height: '',
+  weight: '',
+  activityLevel: '',
   primaryGoal: '',
-  secondaryGoal: '',
   trainingForEvent: false,
+  eventDate: '',
   daysPerWeek: 3,
   workoutDuration: '',
   preferredTime: '',
-  restDays: [],
   fitnessLevel: '',
-  enjoyedWorkouts: [],
   workoutLocation: '',
   availableEquipment: [],
-  dietPlan: '',
-  mealPreparation: '',
+  dietType: '',
   injuries: '',
   medicalConditions: '',
-  motivationFactors: [],
-  workoutStyle: '',
+  motivation: '',
   progressTracking: [],
   checkInFrequency: '',
 };
 
 const sections = [
-  'Fitness Goals',
-  'Schedule & Time',
-  'Fitness Background',
-  'Equipment & Access',
-  'Lifestyle & Nutrition',
-  'Health & Safety',
-  'Motivation & Preferences',
-  'Progress & Tracking',
+  'Profile & Goals',
+  'Schedule & Fitness',
+  'Equipment & Nutrition',
+  'Health & Motivation',
+  'Progress Tracking',
 ];
+
+const mapToQuestionnaireData = (state: QuestionnaireState): QuestionnaireData => ({
+  generalInfo: {
+    age: Number(state.age),
+    biologicalSex: state.biologicalSex as any,
+    height: Number(state.height),
+    weight: Number(state.weight),
+    activityLevel: state.activityLevel as any,
+    medicalLimitations: state.injuries ? state.injuries.split(',').map(s => s.trim()) : [],
+    dietType: state.dietType as any,
+  },
+  wellnessPreferences: {
+    mainGoal: state.primaryGoal as any,
+    focusAreas: [], // Could be derived from goals if needed
+    timeDedication: state.workoutDuration as any,
+    preferredTime: state.preferredTime as any,
+    participateInChallenges: false,
+    wantReminders: false,
+  },
+});
 
 export const WorkoutQuestionnaire: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [state, setState] = useState<QuestionnaireState>(initialState);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { setRoutine } = useStore();
 
   const handleNext = () => {
     setActiveStep((prevStep) => prevStep + 1);
@@ -102,419 +117,300 @@ export const WorkoutQuestionnaire: React.FC = () => {
     setActiveStep((prevStep) => prevStep - 1);
   };
 
-  const handleSubmit = () => {
-    console.log('Questionnaire completed:', state);
-    // Here you would typically send the data to your backend
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = mapToQuestionnaireData(state);
+      const routine = await generateRoutine(data);
+      setRoutine(routine);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate routine. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const isSectionValid = () => {
+    switch (activeStep) {
+      case 0:
+        return !!state.age && !!state.biologicalSex && !!state.height && !!state.weight && !!state.activityLevel && !!state.primaryGoal;
+      case 1:
+        return !!state.daysPerWeek && !!state.workoutDuration && !!state.preferredTime && !!state.fitnessLevel;
+      case 2:
+        return !!state.workoutLocation && state.availableEquipment.length > 0 && !!state.dietType;
+      case 3:
+        const injuriesValid = (state.injuries === 'no') || (state.injuries !== '' && state.injuries !== 'no');
+        const medicalValid = (state.medicalConditions === 'no') || (state.medicalConditions !== '' && state.medicalConditions !== 'no');
+        return injuriesValid && medicalValid && !!state.motivation;
+      case 4:
+        return state.progressTracking.length > 0 && !!state.checkInFrequency;
+      default:
+        return true;
+    }
+  };
+
+  const renderSection0 = () => (
+    <Box>
+      <Typography variant="h6" gutterBottom>👤 Profile & Goals</Typography>
+      <Box mb={2}><TextField fullWidth label="Age" type="number" value={state.age} onChange={e => setState({ ...state, age: e.target.value })} /></Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>Biological Sex</FormLabel>
+          <RadioGroup value={state.biologicalSex} onChange={e => setState({ ...state, biologicalSex: e.target.value })}>
+            <FormControlLabel value="male" control={<Radio />} label="Male" />
+            <FormControlLabel value="female" control={<Radio />} label="Female" />
+            <FormControlLabel value="prefer_not_to_say" control={<Radio />} label="Prefer not to say" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
+      <Box mb={2}><TextField fullWidth label="Height (cm)" type="number" value={state.height} onChange={e => setState({ ...state, height: e.target.value })} /></Box>
+      <Box mb={2}><TextField fullWidth label="Weight (kg)" type="number" value={state.weight} onChange={e => setState({ ...state, weight: e.target.value })} /></Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>Activity Level</FormLabel>
+          <RadioGroup value={state.activityLevel} onChange={e => setState({ ...state, activityLevel: e.target.value })}>
+            <FormControlLabel value="sedentary" control={<Radio />} label="Sedentary (little or no exercise)" />
+            <FormControlLabel value="light" control={<Radio />} label="Light (1–2 days/week)" />
+            <FormControlLabel value="moderate" control={<Radio />} label="Moderate (3–5 days/week)" />
+            <FormControlLabel value="active" control={<Radio />} label="Active (6–7 days/week)" />
+            <FormControlLabel value="very_active" control={<Radio />} label="Very active (daily intense training)" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>What is your primary fitness goal?</FormLabel>
+          <RadioGroup value={state.primaryGoal} onChange={e => setState({ ...state, primaryGoal: e.target.value })}>
+            <FormControlLabel value="lose_fat" control={<Radio />} label="🔥 Lose fat" />
+            <FormControlLabel value="build_muscle" control={<Radio />} label="💪 Build muscle" />
+            <FormControlLabel value="endurance" control={<Radio />} label="🫀 Improve endurance" />
+            <FormControlLabel value="flexibility" control={<Radio />} label="🤸 Increase flexibility/mobility" />
+            <FormControlLabel value="wellness" control={<Radio />} label="🌿 General wellness" />
+            <FormControlLabel value="stress" control={<Radio />} label="🧘 Reduce stress" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>Are you training for a specific event or deadline?</FormLabel>
+          <RadioGroup value={state.trainingForEvent ? 'yes' : 'no'} onChange={e => setState({ ...state, trainingForEvent: e.target.value === 'yes' })}>
+            <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+            <FormControlLabel value="no" control={<Radio />} label="No" />
+          </RadioGroup>
+          {state.trainingForEvent && (
+            <TextField type="date" fullWidth margin="normal" value={state.eventDate} onChange={e => setState({ ...state, eventDate: e.target.value })} />
+          )}
+        </FormControl>
+      </Box>
+    </Box>
+  );
 
   const renderSection1 = () => (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        🧭 Your Fitness Goals
-      </Typography>
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>1. What is your primary fitness goal?</FormLabel>
-        <RadioGroup
-          value={state.primaryGoal}
-          onChange={(e) => setState({ ...state, primaryGoal: e.target.value })}
-        >
-          <FormControlLabel value="lose_fat" control={<Radio />} label="🔥 Lose fat" />
-          <FormControlLabel value="build_muscle" control={<Radio />} label="💪 Build muscle" />
-          <FormControlLabel value="endurance" control={<Radio />} label="🫀 Improve endurance" />
-          <FormControlLabel value="flexibility" control={<Radio />} label="🤸 Increase flexibility/mobility" />
-          <FormControlLabel value="wellness" control={<Radio />} label="🌿 General wellness" />
-          <FormControlLabel value="stress" control={<Radio />} label="🧘 Reduce stress" />
-        </RadioGroup>
-      </FormControl>
-
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>2. Do you have a secondary goal? (Optional)</FormLabel>
-        <RadioGroup
-          value={state.secondaryGoal}
-          onChange={(e) => setState({ ...state, secondaryGoal: e.target.value })}
-        >
-          <FormControlLabel value="same" control={<Radio />} label="Same as primary" />
-          <FormControlLabel value="event" control={<Radio />} label="🏃‍♀️ Train for an event" />
-          <FormControlLabel value="posture" control={<Radio />} label="🏋️ Improve posture/strength" />
-          <FormControlLabel value="clarity" control={<Radio />} label="😌 Mental clarity" />
-          <FormControlLabel value="none" control={<Radio />} label="None" />
-        </RadioGroup>
-      </FormControl>
-
-      <FormControl component="fieldset">
-        <FormLabel>3. Are you training for a specific event or deadline?</FormLabel>
-        <RadioGroup
-          value={state.trainingForEvent ? 'yes' : 'no'}
-          onChange={(e) => setState({ ...state, trainingForEvent: e.target.value === 'yes' })}
-        >
-          <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-          <FormControlLabel value="no" control={<Radio />} label="No" />
-        </RadioGroup>
-        {state.trainingForEvent && (
-          <TextField
-            type="date"
-            fullWidth
-            margin="normal"
-            value={state.eventDate}
-            onChange={(e) => setState({ ...state, eventDate: e.target.value })}
-          />
-        )}
-      </FormControl>
+      <Typography variant="h6" gutterBottom>🏋️ Schedule & Fitness</Typography>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>How many days per week can you work out?</FormLabel>
+          <Slider value={state.daysPerWeek} onChange={(_, value) => setState({ ...state, daysPerWeek: value as number })} min={1} max={7} marks valueLabelDisplay="auto" />
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>How long can your workouts be?</FormLabel>
+          <RadioGroup value={state.workoutDuration} onChange={e => setState({ ...state, workoutDuration: e.target.value })}>
+            <FormControlLabel value="15min" control={<Radio />} label="15 minutes" />
+            <FormControlLabel value="30min" control={<Radio />} label="30 minutes" />
+            <FormControlLabel value="45min" control={<Radio />} label="45 minutes" />
+            <FormControlLabel value="1hour" control={<Radio />} label="1 hour" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>When do you prefer to train?</FormLabel>
+          <RadioGroup value={state.preferredTime} onChange={e => setState({ ...state, preferredTime: e.target.value })}>
+            <FormControlLabel value="morning" control={<Radio />} label="Morning" />
+            <FormControlLabel value="afternoon" control={<Radio />} label="Afternoon" />
+            <FormControlLabel value="evening" control={<Radio />} label="Evening" />
+            <FormControlLabel value="no_preference" control={<Radio />} label="No preference" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>How would you rate your current fitness level?</FormLabel>
+          <RadioGroup value={state.fitnessLevel} onChange={e => setState({ ...state, fitnessLevel: e.target.value })}>
+            <FormControlLabel value="beginner" control={<Radio />} label="Beginner (new or returning)" />
+            <FormControlLabel value="intermediate" control={<Radio />} label="Intermediate (some consistency)" />
+            <FormControlLabel value="advanced" control={<Radio />} label="Advanced (train regularly)" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
     </Box>
   );
 
   const renderSection2 = () => (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        🗓️ Schedule & Time
-      </Typography>
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <FormLabel>4. How many days per week can you work out?</FormLabel>
-        <Slider
-          value={state.daysPerWeek}
-          onChange={(_, value) => setState({ ...state, daysPerWeek: value as number })}
-          min={1}
-          max={7}
-          marks
-          valueLabelDisplay="auto"
-        />
-      </FormControl>
-
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>5. How long can your workouts be?</FormLabel>
-        <RadioGroup
-          value={state.workoutDuration}
-          onChange={(e) => setState({ ...state, workoutDuration: e.target.value })}
-        >
-          <FormControlLabel value="15-30" control={<Radio />} label="⏱ 15–30 min" />
-          <FormControlLabel value="30-45" control={<Radio />} label="⏱ 30–45 min" />
-          <FormControlLabel value="45-60" control={<Radio />} label="⏱ 45–60 min" />
-          <FormControlLabel value="60+" control={<Radio />} label="⏱ 60+ min" />
-        </RadioGroup>
-      </FormControl>
-
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>6. When do you prefer to train?</FormLabel>
-        <RadioGroup
-          value={state.preferredTime}
-          onChange={(e) => setState({ ...state, preferredTime: e.target.value })}
-        >
-          <FormControlLabel value="morning" control={<Radio />} label="🌅 Morning" />
-          <FormControlLabel value="afternoon" control={<Radio />} label="🌤️ Afternoon" />
-          <FormControlLabel value="evening" control={<Radio />} label="🌙 Evening" />
-          <FormControlLabel value="flexible" control={<Radio />} label="⏰ Flexible" />
-        </RadioGroup>
-      </FormControl>
-
-      <FormControl component="fieldset">
-        <FormLabel>7. Are there specific days you'd like to rest?</FormLabel>
-        <Grid container spacing={1}>
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <Grid item key={day}>
-              <Chip
-                label={day}
-                onClick={() => {
-                  const newRestDays = state.restDays.includes(day)
-                    ? state.restDays.filter(d => d !== day)
-                    : [...state.restDays, day];
-                  setState({ ...state, restDays: newRestDays });
-                }}
-                color={state.restDays.includes(day) ? 'primary' : 'default'}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </FormControl>
+      <Typography variant="h6" gutterBottom>🏠 Equipment & Nutrition</Typography>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>Where will you work out most often?</FormLabel>
+          <RadioGroup value={state.workoutLocation} onChange={e => setState({ ...state, workoutLocation: e.target.value })}>
+            <FormControlLabel value="home" control={<Radio />} label="At home" />
+            <FormControlLabel value="gym" control={<Radio />} label="Gym" />
+            <FormControlLabel value="outdoors" control={<Radio />} label="Outdoors" />
+            <FormControlLabel value="traveling" control={<Radio />} label="While traveling" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>What equipment do you have access to?</FormLabel>
+          <Grid container spacing={1} direction="column">
+            {['Dumbbells','Resistance bands','Yoga mat','Pull-up bar','Treadmill or bike','Kettlebells','Bodyweight only'].map(equipment => (
+              <Grid item key={equipment}>
+                <Chip
+                  label={equipment}
+                  onClick={() => {
+                    const newEquipment = state.availableEquipment.includes(equipment)
+                      ? state.availableEquipment.filter(e => e !== equipment)
+                      : [...state.availableEquipment, equipment];
+                    setState({ ...state, availableEquipment: newEquipment });
+                  }}
+                  color={state.availableEquipment.includes(equipment) ? 'primary' : 'default'}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>Diet Type</FormLabel>
+          <RadioGroup value={state.dietType} onChange={e => setState({ ...state, dietType: e.target.value })}>
+            <FormControlLabel value="none" control={<Radio />} label="No specific diet" />
+            <FormControlLabel value="vegetarian" control={<Radio />} label="Vegetarian" />
+            <FormControlLabel value="vegan" control={<Radio />} label="Vegan" />
+            <FormControlLabel value="keto" control={<Radio />} label="Keto" />
+            <FormControlLabel value="mediterranean" control={<Radio />} label="Mediterranean" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
     </Box>
   );
 
   const renderSection3 = () => (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        🧘 Fitness Background
-      </Typography>
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>8. How would you rate your current fitness level?</FormLabel>
-        <RadioGroup
-          value={state.fitnessLevel}
-          onChange={(e) => setState({ ...state, fitnessLevel: e.target.value })}
-        >
-          <FormControlLabel value="beginner" control={<Radio />} label="🟢 Beginner (new or returning)" />
-          <FormControlLabel value="intermediate" control={<Radio />} label="🟡 Intermediate (some consistency)" />
-          <FormControlLabel value="advanced" control={<Radio />} label="🔴 Advanced (train regularly)" />
-        </RadioGroup>
-      </FormControl>
-
-      <FormControl component="fieldset">
-        <FormLabel>9. What types of workouts do you already enjoy?</FormLabel>
-        <Grid container spacing={1}>
-          {[
-            { value: 'strength', label: '🏋️ Strength' },
-            { value: 'cardio', label: '🏃 Cardio' },
-            { value: 'yoga', label: '🧘 Yoga or Stretching' },
-            { value: 'hiit', label: '🥊 HIIT' },
-            { value: 'dance', label: '💃 Dance' },
-            { value: 'none', label: '🚫 None yet' },
-          ].map((workout) => (
-            <Grid item key={workout.value}>
-              <Chip
-                label={workout.label}
-                onClick={() => {
-                  const newWorkouts = state.enjoyedWorkouts.includes(workout.value)
-                    ? state.enjoyedWorkouts.filter(w => w !== workout.value)
-                    : [...state.enjoyedWorkouts, workout.value];
-                  setState({ ...state, enjoyedWorkouts: newWorkouts });
-                }}
-                color={state.enjoyedWorkouts.includes(workout.value) ? 'primary' : 'default'}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </FormControl>
+      <Typography variant="h6" gutterBottom>❤️ Health & Motivation</Typography>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>Do you have any injuries or limitations?</FormLabel>
+          <RadioGroup
+            value={state.injuries ? 'yes' : 'no'}
+            onChange={e => {
+              if (e.target.value === 'no') {
+                setState({ ...state, injuries: 'no' });
+              } else {
+                setState({ ...state, injuries: '' });
+              }
+            }}
+          >
+            <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+            <FormControlLabel value="no" control={<Radio />} label="No" />
+          </RadioGroup>
+          {state.injuries !== 'no' && (
+            <TextField fullWidth margin="normal" multiline rows={2} placeholder="Please describe your injuries or limitations" value={state.injuries === 'no' ? '' : state.injuries} onChange={e => setState({ ...state, injuries: e.target.value })} />
+          )}
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>Any medical conditions that affect your ability to train?</FormLabel>
+          <RadioGroup
+            value={state.medicalConditions ? 'yes' : 'no'}
+            onChange={e => {
+              if (e.target.value === 'no') {
+                setState({ ...state, medicalConditions: 'no' });
+              } else {
+                setState({ ...state, medicalConditions: '' });
+              }
+            }}
+          >
+            <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+            <FormControlLabel value="no" control={<Radio />} label="No" />
+          </RadioGroup>
+          {state.medicalConditions !== 'no' && (
+            <TextField fullWidth margin="normal" multiline rows={2} placeholder="Please describe your medical conditions" value={state.medicalConditions === 'no' ? '' : state.medicalConditions} onChange={e => setState({ ...state, medicalConditions: e.target.value })} />
+          )}
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>What motivates you to stay active?</FormLabel>
+          <TextField fullWidth multiline rows={2} placeholder="e.g. Feeling better, achieving goals, social support..." value={state.motivation} onChange={e => setState({ ...state, motivation: e.target.value })} />
+        </FormControl>
+      </Box>
     </Box>
   );
 
   const renderSection4 = () => (
     <Box>
-      <Typography variant="h6" gutterBottom>
-        🏋️ Equipment & Access
-      </Typography>
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>10. Where will you work out most often?</FormLabel>
-        <RadioGroup
-          value={state.workoutLocation}
-          onChange={(e) => setState({ ...state, workoutLocation: e.target.value })}
-        >
-          <FormControlLabel value="home" control={<Radio />} label="🏠 At home" />
-          <FormControlLabel value="gym" control={<Radio />} label="🏋️ Gym" />
-          <FormControlLabel value="outdoors" control={<Radio />} label="🌳 Outdoors" />
-          <FormControlLabel value="traveling" control={<Radio />} label="🧳 While traveling" />
-        </RadioGroup>
-      </FormControl>
-
-      <FormControl component="fieldset">
-        <FormLabel>11. What equipment do you have access to?</FormLabel>
-        <Grid container spacing={1}>
-          {[
-            'Dumbbells',
-            'Resistance bands',
-            'Yoga mat',
-            'Pull-up bar',
-            'Treadmill or bike',
-            'Kettlebells',
-            'Bodyweight only',
-          ].map((equipment) => (
-            <Grid item key={equipment}>
-              <Chip
-                label={equipment}
-                onClick={() => {
-                  const newEquipment = state.availableEquipment.includes(equipment)
-                    ? state.availableEquipment.filter(e => e !== equipment)
-                    : [...state.availableEquipment, equipment];
-                  setState({ ...state, availableEquipment: newEquipment });
-                }}
-                color={state.availableEquipment.includes(equipment) ? 'primary' : 'default'}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </FormControl>
-    </Box>
-  );
-
-  const renderSection5 = () => (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        🥗 Lifestyle & Nutrition
-      </Typography>
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>12. Do you follow a specific diet or nutrition plan?</FormLabel>
-        <RadioGroup
-          value={state.dietPlan}
-          onChange={(e) => setState({ ...state, dietPlan: e.target.value })}
-        >
-          <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-          <FormControlLabel value="no" control={<Radio />} label="No" />
-          <FormControlLabel value="help" control={<Radio />} label="I'd like help with nutrition" />
-        </RadioGroup>
-      </FormControl>
-
-      <FormControl component="fieldset">
-        <FormLabel>13. How often do you cook or prepare meals?</FormLabel>
-        <RadioGroup
-          value={state.mealPreparation}
-          onChange={(e) => setState({ ...state, mealPreparation: e.target.value })}
-        >
-          <FormControlLabel value="most" control={<Radio />} label="🧑‍🍳 Most days" />
-          <FormControlLabel value="sometimes" control={<Radio />} label="🍱 Sometimes" />
-          <FormControlLabel value="rarely" control={<Radio />} label="🍔 Rarely" />
-        </RadioGroup>
-      </FormControl>
-    </Box>
-  );
-
-  const renderSection6 = () => (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        ❤️ Health & Safety
-      </Typography>
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>14. Do you have any injuries or limitations I should know about?</FormLabel>
-        <RadioGroup
-          value={state.injuries ? 'yes' : 'no'}
-          onChange={(e) => setState({ ...state, injuries: e.target.value === 'yes' ? '' : 'no' })}
-        >
-          <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-          <FormControlLabel value="no" control={<Radio />} label="No" />
-        </RadioGroup>
-        {state.injuries !== 'no' && (
-          <TextField
-            fullWidth
-            margin="normal"
-            multiline
-            rows={2}
-            placeholder="Please describe your injuries or limitations"
-            value={state.injuries}
-            onChange={(e) => setState({ ...state, injuries: e.target.value })}
-          />
-        )}
-      </FormControl>
-
-      <FormControl component="fieldset">
-        <FormLabel>15. Any medical conditions that affect your ability to train?</FormLabel>
-        <RadioGroup
-          value={state.medicalConditions ? 'yes' : 'no'}
-          onChange={(e) => setState({ ...state, medicalConditions: e.target.value === 'yes' ? '' : 'no' })}
-        >
-          <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-          <FormControlLabel value="no" control={<Radio />} label="No" />
-        </RadioGroup>
-        {state.medicalConditions !== 'no' && (
-          <TextField
-            fullWidth
-            margin="normal"
-            multiline
-            rows={2}
-            placeholder="Please describe your medical conditions"
-            value={state.medicalConditions}
-            onChange={(e) => setState({ ...state, medicalConditions: e.target.value })}
-          />
-        )}
-      </FormControl>
-    </Box>
-  );
-
-  const renderSection7 = () => (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        💡 Motivation & Preferences
-      </Typography>
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>16. What keeps you motivated?</FormLabel>
-        <Grid container spacing={1}>
-          {[
-            { value: 'goals', label: '🎯 Clear goals' },
-            { value: 'progress', label: '📊 Seeing progress' },
-            { value: 'music', label: '🎵 Music or mood' },
-            { value: 'accountability', label: '🧑‍🤝‍🧑 Accountability' },
-            { value: 'challenges', label: '🎮 Challenges & badges' },
-            { value: 'feeling', label: '☀️ Just feeling better' },
-          ].map((factor) => (
-            <Grid item key={factor.value}>
-              <Chip
-                label={factor.label}
-                onClick={() => {
-                  const newFactors = state.motivationFactors.includes(factor.value)
-                    ? state.motivationFactors.filter(f => f !== factor.value)
-                    : [...state.motivationFactors, factor.value];
-                  setState({ ...state, motivationFactors: newFactors });
-                }}
-                color={state.motivationFactors.includes(factor.value) ? 'primary' : 'default'}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </FormControl>
-
-      <FormControl component="fieldset">
-        <FormLabel>17. What workout style do you prefer?</FormLabel>
-        <RadioGroup
-          value={state.workoutStyle}
-          onChange={(e) => setState({ ...state, workoutStyle: e.target.value })}
-        >
-          <FormControlLabel value="structured" control={<Radio />} label="Structured plan (daily schedule)" />
-          <FormControlLabel value="flexible" control={<Radio />} label="Flexible plan (mix & match)" />
-          <FormControlLabel value="surprise" control={<Radio />} label="Surprise me each day!" />
-        </RadioGroup>
-      </FormControl>
-    </Box>
-  );
-
-  const renderSection8 = () => (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        📈 Progress & Tracking
-      </Typography>
-      <FormControl component="fieldset" sx={{ mb: 3 }}>
-        <FormLabel>18. How would you like to track your progress?</FormLabel>
-        <Grid container spacing={1}>
-          {[
-            { value: 'photos', label: '📷 Progress photos' },
-            { value: 'measurements', label: '📏 Body measurements' },
-            { value: 'weight', label: '⚖️ Weight' },
-            { value: 'mood', label: '🧠 Mood & energy' },
-            { value: 'prs', label: '📊 Personal records (PRs)' },
-            { value: 'none', label: "🚫 Don't want to track anything" },
-          ].map((method) => (
-            <Grid item key={method.value}>
-              <Chip
-                label={method.label}
-                onClick={() => {
-                  const newTracking = state.progressTracking.includes(method.value)
-                    ? state.progressTracking.filter(t => t !== method.value)
-                    : [...state.progressTracking, method.value];
-                  setState({ ...state, progressTracking: newTracking });
-                }}
-                color={state.progressTracking.includes(method.value) ? 'primary' : 'default'}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      </FormControl>
-
-      <FormControl component="fieldset">
-        <FormLabel>19. How often should we check in with you?</FormLabel>
-        <RadioGroup
-          value={state.checkInFrequency}
-          onChange={(e) => setState({ ...state, checkInFrequency: e.target.value })}
-        >
-          <FormControlLabel value="daily" control={<Radio />} label="Daily" />
-          <FormControlLabel value="weekly" control={<Radio />} label="Weekly" />
-          <FormControlLabel value="biweekly" control={<Radio />} label="Every 2 weeks" />
-          <FormControlLabel value="monthly" control={<Radio />} label="Monthly" />
-        </RadioGroup>
-      </FormControl>
+      <Typography variant="h6" gutterBottom>📈 Progress Tracking</Typography>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>How would you like to track your progress?</FormLabel>
+          <Grid container spacing={1} direction="column">
+            {[
+              { value: 'photos', label: '📷 Progress photos' },
+              { value: 'measurements', label: '📏 Body measurements' },
+              { value: 'weight', label: '⚖️ Weight' },
+              { value: 'mood', label: '🧠 Mood & energy' },
+              { value: 'prs', label: '📊 Personal records (PRs)' },
+              { value: 'none', label: "🚫 Don't want to track anything" },
+            ].map(method => (
+              <Grid item key={method.value}>
+                <Chip
+                  label={method.label}
+                  onClick={() => {
+                    const newTracking = state.progressTracking.includes(method.value)
+                      ? state.progressTracking.filter(t => t !== method.value)
+                      : [...state.progressTracking, method.value];
+                    setState({ ...state, progressTracking: newTracking });
+                  }}
+                  color={state.progressTracking.includes(method.value) ? 'primary' : 'default'}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </FormControl>
+      </Box>
+      <Box mb={2}>
+        <FormControl fullWidth>
+          <FormLabel>How often should we check in with you?</FormLabel>
+          <RadioGroup value={state.checkInFrequency} onChange={e => setState({ ...state, checkInFrequency: e.target.value })}>
+            <FormControlLabel value="daily" control={<Radio />} label="Daily" />
+            <FormControlLabel value="weekly" control={<Radio />} label="Weekly" />
+            <FormControlLabel value="biweekly" control={<Radio />} label="Every 2 weeks" />
+            <FormControlLabel value="monthly" control={<Radio />} label="Monthly" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
     </Box>
   );
 
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
-        return renderSection1();
+        return renderSection0();
       case 1:
-        return renderSection2();
+        return renderSection1();
       case 2:
-        return renderSection3();
+        return renderSection2();
       case 3:
-        return renderSection4();
+        return renderSection3();
       case 4:
-        return renderSection5();
-      case 5:
-        return renderSection6();
-      case 6:
-        return renderSection7();
-      case 7:
-        return renderSection8();
+        return renderSection4();
       default:
         return null;
     }
@@ -546,14 +442,16 @@ export const WorkoutQuestionnaire: React.FC = () => {
               variant="contained"
               color="primary"
               onClick={handleSubmit}
+              disabled={!isSectionValid() || loading}
             >
-              Submit
+              {loading ? <CircularProgress size={24} color="inherit" /> : 'Submit'}
             </Button>
           ) : (
             <Button
               variant="contained"
               color="primary"
               onClick={handleNext}
+              disabled={!isSectionValid()}
             >
               Next
             </Button>

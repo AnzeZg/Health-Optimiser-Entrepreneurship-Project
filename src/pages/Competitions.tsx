@@ -97,11 +97,14 @@ const Competitions: React.FC = () => {
 
       {/* Featured Competition Banner */}
       <Paper
+        elevation={6}
         sx={{
           p: 3,
           mb: 4,
-          background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+          background: 'linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)',
           color: 'white',
+          borderRadius: 4,
+          boxShadow: 6,
         }}
       >
         <Grid container spacing={2} alignItems="center">
@@ -123,7 +126,7 @@ const Competitions: React.FC = () => {
       </Paper>
 
       {/* Filter and Sort Bar */}
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4, background: 'linear-gradient(90deg, #e3f2fd 0%, #bbdefb 100%)', borderRadius: 3, p: 2, boxShadow: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} md={4}>
             <ToggleButtonGroup
@@ -172,7 +175,16 @@ const Competitions: React.FC = () => {
       <Grid container spacing={3}>
         {filteredCompetitions.map((competition) => (
           <Grid item xs={12} md={4} key={competition.id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <Card sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 4,
+              boxShadow: 4,
+              background: 'linear-gradient(135deg, #e3f2fd 0%, #fff 100%)',
+              transition: 'box-shadow 0.2s',
+              '&:hover': { boxShadow: 8, transform: 'translateY(-2px)' },
+            }}>
               <CardContent sx={{ flexGrow: 1 }}>
                 <Typography variant="h1" align="center" sx={{ fontSize: '3rem', mb: 2 }}>
                   {competition.image}
@@ -219,12 +231,15 @@ const Competitions: React.FC = () => {
 
       {/* Footer CTA */}
       <Paper
+        elevation={4}
         sx={{
           p: 4,
           mt: 4,
           textAlign: 'center',
-          background: 'linear-gradient(45deg, #FF9800 30%, #FFB74D 90%)',
+          background: 'linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)',
           color: 'white',
+          borderRadius: 4,
+          boxShadow: 4,
         }}
       >
         <Typography variant="h5" gutterBottom>

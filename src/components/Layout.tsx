@@ -56,14 +56,53 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const drawer = (
-    <div>
-      <Toolbar>
-        <Typography variant="h6" noWrap component="div">
-          Health Optimizer
-        </Typography>
+    <div
+      style={{
+        height: '100%',
+        background: 'linear-gradient(135deg, #1976d2 0%, #42a5f5 100%)',
+        color: '#fff',
+        borderTopRightRadius: 32,
+        borderBottomRightRadius: 32,
+        boxShadow: '2px 0 12px 0 rgba(66,165,245,0.08)',
+      }}
+    >
+      <Toolbar sx={{ justifyContent: 'center', alignItems: 'center', flexDirection: 'column', minHeight: 96 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              background: 'linear-gradient(135deg, #fff 0%, #e3f2fd 100%)',
+              borderRadius: '50%',
+              width: 56,
+              height: 56,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: 2,
+              mb: 1,
+            }}
+          >
+            <FitnessCenterIcon sx={{ color: '#1976d2', fontSize: 32 }} />
+          </Box>
+          <Typography
+            variant="h5"
+            noWrap
+            component="div"
+            sx={{
+              fontWeight: 800,
+              letterSpacing: 1,
+              background: 'linear-gradient(90deg, #fff 40%, #fce4ec 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textAlign: 'center',
+              mb: 0.5,
+            }}
+          >
+            Well Sync
+          </Typography>
+        </Box>
       </Toolbar>
-      <Divider />
-      <List>
+      <Divider sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
+      <List sx={{ mt: 2 }}>
         {menuItems.map((item) => (
           <ListItem
             button
@@ -75,8 +114,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               }
             }}
             selected={location.pathname === item.path}
+            sx={{
+              borderRadius: 2,
+              mx: 1,
+              mb: 1,
+              color: '#fff',
+              '&.Mui-selected, &.Mui-selected:hover': {
+                background: 'rgba(255,255,255,0.15)',
+                color: '#fff',
+              },
+              '&:hover': {
+                background: 'rgba(255,255,255,0.08)',
+              },
+            }}
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemIcon sx={{ color: '#fff' }}>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />
           </ListItem>
         ))}
@@ -92,6 +144,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         sx={{
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
+          background: 'linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)',
+          borderBottomLeftRadius: 24,
+          borderBottomRightRadius: 24,
+          boxShadow: '0 4px 24px 0 rgba(66,165,245,0.10)',
         }}
       >
         <Toolbar>
@@ -104,9 +160,41 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            {menuItems.find((item) => item.path === location.pathname)?.text || 'Health Optimizer'}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 1 }}>
+            <Box
+              sx={{
+                background: 'linear-gradient(135deg, #fff 0%, #e3f2fd 100%)',
+                borderRadius: '50%',
+                width: 36,
+                height: 36,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 1,
+                mr: 1,
+              }}
+            >
+              <FitnessCenterIcon sx={{ color: '#1976d2', fontSize: 22 }} />
+            </Box>
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                fontWeight: 800,
+                letterSpacing: 1,
+                background: 'linear-gradient(90deg, #fff 40%, #fce4ec 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                textShadow: '0 1px 4px rgba(66,165,245,0.10)',
+                display: 'flex',
+                alignItems: 'center',
+                pl: 0,
+              }}
+            >
+              {menuItems.find((item) => item.path === location.pathname)?.text || 'Well Sync'}
+            </Typography>
+          </Box>
         </Toolbar>
       </AppBar>
       <Box

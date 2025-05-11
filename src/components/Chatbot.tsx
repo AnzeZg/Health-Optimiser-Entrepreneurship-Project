@@ -19,7 +19,7 @@ interface Message {
 }
 
 interface ConversationState {
-  stage: 'initial' | 'anxious' | 'grounding' | 'mood_tracking' | 'tea_suggestion' | 'reminder';
+  stage: 'initial' | 'anxious' | 'grounding' | 'mood_tracking' | 'mood_rating' | 'tea_suggestion' | 'reminder';
   moodRating?: number;
 }
 
@@ -118,13 +118,17 @@ export const Chatbot = () => {
   };
 
   return (
-    <Box sx={{ 
-      maxWidth: 600, 
-      margin: 'auto', 
-      height: '80vh', 
-      display: 'flex', 
+    <Box sx={{
+      maxWidth: 600,
+      margin: 'auto',
+      height: '80vh',
+      display: 'flex',
       flexDirection: 'column',
-      p: 2
+      p: 2,
+      background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)',
+      borderRadius: 4,
+      boxShadow: 4,
+      position: 'relative',
     }}>
       <Paper 
         elevation={3} 
@@ -133,7 +137,8 @@ export const Chatbot = () => {
           mb: 2, 
           overflow: 'auto',
           p: 2,
-          backgroundColor: '#f5f5f5'
+          background: 'linear-gradient(135deg, #e3f2fd 0%, #fff 100%)',
+          borderRadius: 3,
         }}
       >
         <List>
@@ -142,20 +147,27 @@ export const Chatbot = () => {
               key={index}
               sx={{
                 justifyContent: message.sender === 'user' ? 'flex-end' : 'flex-start',
-                mb: 1
+                mb: 1,
+                transition: 'all 0.3s',
               }}
             >
               {message.sender === 'bot' && (
-                <Avatar sx={{ mr: 1, bgcolor: '#4CAF50' }}>L</Avatar>
+                <Avatar sx={{ mr: 1, bgcolor: 'primary.main', color: 'white', boxShadow: 2 }}>L</Avatar>
               )}
               <Paper
                 elevation={1}
                 sx={{
                   p: 2,
                   maxWidth: '70%',
-                  backgroundColor: message.sender === 'user' ? 'primary.main' : 'white',
-                  color: message.sender === 'user' ? 'white' : 'text.primary',
-                  whiteSpace: 'pre-line'
+                  background: message.sender === 'user'
+                    ? 'linear-gradient(90deg, #1976d2 0%, #42a5f5 100%)'
+                    : 'linear-gradient(135deg, #fff 0%, #e3f2fd 100%)',
+                  color: message.sender === 'user' ? 'white' : 'primary.main',
+                  whiteSpace: 'pre-line',
+                  borderRadius: message.sender === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+                  boxShadow: 2,
+                  fontSize: '1.05rem',
+                  animation: 'fadeIn 0.4s',
                 }}
               >
                 <ListItemText primary={message.text} />
@@ -164,13 +176,23 @@ export const Chatbot = () => {
                 </Typography>
               </Paper>
               {message.sender === 'user' && (
-                <Avatar sx={{ ml: 1, bgcolor: 'secondary.main' }}>U</Avatar>
+                <Avatar sx={{ ml: 1, bgcolor: 'primary.light', color: 'primary.dark', boxShadow: 2 }}>U</Avatar>
               )}
             </ListItem>
           ))}
         </List>
       </Paper>
-      <Box sx={{ display: 'flex', gap: 1 }}>
+      <Box sx={{
+        display: 'flex',
+        gap: 1,
+        position: 'sticky',
+        bottom: 0,
+        background: 'linear-gradient(135deg, #e3f2fd 0%, #fff 100%)',
+        borderRadius: 3,
+        boxShadow: 2,
+        p: 1,
+        zIndex: 2,
+      }}>
         <TextField
           fullWidth
           variant="outlined"

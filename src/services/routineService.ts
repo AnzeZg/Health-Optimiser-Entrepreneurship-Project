@@ -25,10 +25,13 @@ Wellness Goals:
 - Want Daily Reminders: ${wellnessPreferences.wantReminders}
 
 Please generate a detailed 30-day routine that includes:
-1. Daily workouts with specific exercises, sets, reps, and weights
-2. Meal plans with calorie counts and macronutrient breakdowns
-3. Sleep schedule recommendations
-4. Additional wellness activities based on the focus areas
+1. Daily workouts with specific exercises, sets, reps, weights, and rest times. For each exercise, include a reputable YouTube or video URL for demonstration (preferably official or high-quality instructional videos).
+2. Include warm-up and cool-down routines for each workout day, with video links.
+3. For rest days, suggest active recovery activities (like stretching, walking, yoga) and provide video links.
+4. Meal plans with calorie counts and macronutrient breakdowns.
+5. Sleep schedule recommendations.
+6. Additional wellness activities based on the focus areas.
+7. Motivational tips or daily encouragements.
 
 Format the response as a JSON object with the following structure:
 {
@@ -57,14 +60,32 @@ Format the response as a JSON object with the following structure:
       "date": "YYYY-MM-DD",
       "completed": boolean,
       "type": "strength" | "cardio" | "flexibility",
+      "warmup": [
+        { "name": "string", "videoUrl": "string" }
+      ],
       "exercises": [
         {
           "name": "string",
           "sets": number,
           "reps": number,
-          "weight": number
+          "weight": number,
+          "rest": string,
+          "videoUrl": "string"
         }
-      ]
+      ],
+      "cooldown": [
+        { "name": "string", "videoUrl": "string" }
+      ],
+      "motivation": "string"
+    }
+  ],
+  "restDays": [
+    {
+      "date": "YYYY-MM-DD",
+      "activities": [
+        { "name": "string", "videoUrl": "string" }
+      ],
+      "motivation": "string"
     }
   ],
   "sleepSchedule": {

@@ -27,6 +27,10 @@ import {
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useStore } from '../store/useStore';
 import { format, subDays } from 'date-fns';
+import { DateCalendar } from '@mui/x-date-pickers/DateCalendar';
+import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 interface Workout {
   id: string;
@@ -102,178 +106,187 @@ const WorkoutLogging: React.FC = () => {
   }).reverse();
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Workout Logging
-      </Typography>
+    <Box sx={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%)',
+      py: 4,
+      px: { xs: 1, sm: 3 },
+    }}>
+      <Paper elevation={4} sx={{ p: { xs: 2, sm: 4 }, borderRadius: 4, mb: 4, background: 'rgba(255,255,255,0.95)' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+          <FitnessCenterIcon color="primary" fontSize="large" />
+          <Typography variant="h4" fontWeight={700}>Workout Logging</Typography>
+        </Box>
+        {/* Calendar at the top */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 4 }}>
+          <Paper sx={{
+            p: 2,
+            borderRadius: 4,
+            boxShadow: 4,
+            bgcolor: '#e3f2fd',
+            border: '1.5px solid #90caf9',
+            width: { xs: '100%', sm: 400 },
+            maxWidth: 440,
+            overflow: 'hidden',
+            position: 'relative',
+          }}>
+            <DateCalendar
+              value={new Date(selectedDate)}
+              onChange={(date) => date && setSelectedDate(date.toISOString().split('T')[0])}
+              sx={{ bgcolor: 'transparent', borderRadius: 2 }}
+            />
+          </Paper>
+        </Box>
+        {/* Main content below calendar */}
+        <Grid container spacing={3}>
+          {/* Summary Cards */}
+          <Grid item xs={12} md={6}>
+            <Card sx={{ borderRadius: 4, boxShadow: 3, bgcolor: '#fffde7' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <DirectionsRunIcon color="primary" />
+                  <Typography variant="h6" fontWeight={600} gutterBottom>Total Calories Burned</Typography>
+                </Box>
+                <Typography variant="h3" color="primary">{totalCaloriesBurned}</Typography>
+                <Typography variant="subtitle1" color="text.secondary">kcal</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Card sx={{ borderRadius: 4, boxShadow: 3, bgcolor: '#e3f2fd' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <AccessTimeIcon color="primary" />
+                  <Typography variant="h6" fontWeight={600} gutterBottom>Total Duration</Typography>
+                </Box>
+                <Typography variant="h3" color="primary">{totalDuration}</Typography>
+                <Typography variant="subtitle1" color="text.secondary">minutes</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
 
-      <Grid container spacing={3}>
-        {/* Date Selection */}
-        <Grid item xs={12}>
-          <FormControl fullWidth sx={{ mb: 3 }}>
-            <InputLabel>Select Date</InputLabel>
-            <Select
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              label="Select Date"
-            >
-              {dateOptions.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-
-        {/* Summary Cards */}
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Total Calories Burned
-              </Typography>
-              <Typography variant="h3" color="primary">
-                {totalCaloriesBurned}
-              </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                kcal
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Total Duration
-              </Typography>
-              <Typography variant="h3" color="primary">
-                {totalDuration}
-              </Typography>
-              <Typography variant="subtitle1" color="text.secondary">
-                minutes
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Routine Workouts */}
-        {routineWorkouts.length > 0 && (
+          {/* Routine Workouts */}
           <Grid item xs={12}>
-            <Paper sx={{ p: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Today's Workout Plan
+            <Paper sx={{ p: 3, borderRadius: 4, boxShadow: 2, background: 'rgba(227,242,253,0.5)' }}>
+              <Typography variant="h6" fontWeight={600} gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <FitnessCenterIcon color="secondary" /> Today's Workout Plan
               </Typography>
+              {routineWorkouts.length > 0 ? (
+                <List>
+                  {routineWorkouts.map((workout) => (
+                    <React.Fragment key={workout.id}>
+                      <ListItem sx={{ borderRadius: 2, mb: 1, bgcolor: '#f3e5f5' }}>
+                        <Checkbox
+                          checked={workout.completed}
+                          onChange={(e) => updateWorkoutStatus(workout.id, e.target.checked)}
+                          sx={{ mr: 2 }}
+                        />
+                        <ListItemText
+                          primary={<Typography fontWeight={600}>{workout.name}</Typography>}
+                          secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories`}
+                        />
+                      </ListItem>
+                      {workout.exercises && (
+                        <List>
+                          {workout.exercises.map((exercise, index) => (
+                            <ListItem key={index}>
+                              <ListItemText
+                                primary={exercise.name}
+                                secondary={`${exercise.sets} sets × ${exercise.reps} reps${exercise.weight ? ` • ${exercise.weight}kg` : ''}`}
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      )}
+                      <Divider />
+                    </React.Fragment>
+                  ))}
+                </List>
+              ) : (
+                <Typography color="text.secondary" align="center">
+                  No workouts planned for this day. Set up your routine in the Calendar page to see your workout plan.
+                </Typography>
+              )}
+            </Paper>
+          </Grid>
+
+          {/* Custom Workouts */}
+          <Grid item xs={12}>
+            <Paper sx={{ p: 3, borderRadius: 4, boxShadow: 2, background: 'rgba(252,228,236,0.5)' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h6" fontWeight={600} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <DirectionsRunIcon color="primary" /> Custom Workouts
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleOpenDialog}
+                  sx={{ borderRadius: 3, px: 3, fontWeight: 600, boxShadow: 2, background: 'linear-gradient(90deg, #42a5f5 0%, #ab47bc 100%)' }}
+                >
+                  Add Workout
+                </Button>
+              </Box>
               <List>
-                {routineWorkouts.map((workout) => (
-                  <React.Fragment key={workout.id}>
-                    <ListItem>
-                      <Checkbox
-                        checked={workout.completed}
-                        onChange={(e) => updateWorkoutStatus(workout.id, e.target.checked)}
-                        sx={{ mr: 2 }}
-                      />
-                      <ListItemText
-                        primary={workout.name}
-                        secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories`}
-                      />
-                    </ListItem>
-                    {workout.exercises && (
-                      <List>
-                        {workout.exercises.map((exercise, index) => (
-                          <ListItem key={index}>
-                            <ListItemText
-                              primary={exercise.name}
-                              secondary={`${exercise.sets} sets × ${exercise.reps} reps${
-                                exercise.weight ? ` • ${exercise.weight}kg` : ''
-                              }`}
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    )}
-                    <Divider />
-                  </React.Fragment>
+                {customWorkouts.map((workout) => (
+                  <ListItem key={workout.id} sx={{ borderRadius: 2, mb: 1, bgcolor: '#fffde7' }}>
+                    <ListItemText
+                      primary={<Typography fontWeight={600}>{workout.name}</Typography>}
+                      secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories`}
+                    />
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        edge="end"
+                        aria-label="delete"
+                        onClick={() => handleDeleteWorkout(workout.id)}
+                        sx={{ color: 'error.main' }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  </ListItem>
                 ))}
               </List>
             </Paper>
           </Grid>
-        )}
-
-        {/* Custom Workouts */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6">Custom Workouts</Typography>
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleOpenDialog}
-              >
-                Add Workout
-              </Button>
-            </Box>
-
-            <List>
-              {customWorkouts.map((workout) => (
-                <ListItem key={workout.id}>
-                  <ListItemText
-                    primary={workout.name}
-                    secondary={`${workout.duration} minutes • ${workout.caloriesBurned} calories`}
-                  />
-                  <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      aria-label="delete"
-                      onClick={() => handleDeleteWorkout(workout.id)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
         </Grid>
-      </Grid>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>Add New Workout</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <TextField
-              fullWidth
-              label="Workout Name"
-              value={newWorkout.name}
-              onChange={(e) => setNewWorkout({ ...newWorkout, name: e.target.value })}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Duration (minutes)"
-              type="number"
-              value={newWorkout.duration}
-              onChange={(e) => setNewWorkout({ ...newWorkout, duration: Number(e.target.value) })}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              label="Calories Burned"
-              type="number"
-              value={newWorkout.caloriesBurned}
-              onChange={(e) => setNewWorkout({ ...newWorkout, caloriesBurned: Number(e.target.value) })}
-              sx={{ mb: 2 }}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancel</Button>
-          <Button onClick={handleAddWorkout} variant="contained">
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Dialog open={openDialog} onClose={handleCloseDialog}>
+          <DialogTitle>Add New Workout</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 2 }}>
+              <TextField
+                fullWidth
+                label="Workout Name"
+                value={newWorkout.name}
+                onChange={(e) => setNewWorkout({ ...newWorkout, name: e.target.value })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Duration (minutes)"
+                type="number"
+                value={newWorkout.duration}
+                onChange={(e) => setNewWorkout({ ...newWorkout, duration: Number(e.target.value) })}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label="Calories Burned"
+                type="number"
+                value={newWorkout.caloriesBurned}
+                onChange={(e) => setNewWorkout({ ...newWorkout, caloriesBurned: Number(e.target.value) })}
+                sx={{ mb: 2 }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDialog}>Cancel</Button>
+            <Button onClick={handleAddWorkout} variant="contained">
+              Add
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Paper>
     </Box>
   );
 };
