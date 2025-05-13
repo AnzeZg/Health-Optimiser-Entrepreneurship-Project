@@ -10,6 +10,8 @@ A React-based web application for tracking and optimizing your health metrics. T
 - **Sleep Tracking**: Monitor sleep patterns and quality
 - **Data Visualization**: Charts and graphs for health metrics
 - **Responsive Design**: Mobile-friendly interface
+- **Luna Chatbot**: AI-powered assistant for personalized health advice and workout plans
+- **Multi-Section Workout Questionnaire**: Comprehensive questionnaire to generate personalized workout plans
 
 ## Technology Stack
 
@@ -18,6 +20,7 @@ A React-based web application for tracking and optimizing your health metrics. T
 - Recharts for data visualization
 - Zustand for state management
 - Local Storage for data persistence
+- OpenAI API for Luna chatbot integration
 
 ## Getting Started
 
@@ -82,6 +85,15 @@ src/
 - Sleep pattern visualization
 - Weekly sleep trends
 
+### Luna Chatbot
+- AI-powered assistant for personalized health advice
+- Conversational interface for workout plan generation
+- Integration with OpenAI API
+
+### Multi-Section Workout Questionnaire
+- Comprehensive questionnaire covering fitness goals, schedule, background, equipment, nutrition, health, motivation, and progress tracking
+- Personalized workout plan generation based on user responses
+
 ## Contributing
 
 1. Fork the repository
@@ -98,4 +110,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - Material-UI for the component library
 - Recharts for the visualization library
-- Zustand for state management 
+- Zustand for state management
+- OpenAI for Luna chatbot integration 
